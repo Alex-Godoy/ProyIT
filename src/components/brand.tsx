@@ -1,15 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
+import logoColor from "../../public/brand/proyit-logo.png";
+import logoBlanco from "../../public/brand/proyit-logo-blanco.png";
 
+// `light` = versión blanca, para fondos azul navy.
 export function Logo({ light = false }: { light?: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-2" aria-label="Portal ProyIT">
+    <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="Portal ProyIT">
+      <Image
+        src={light ? logoBlanco : logoColor}
+        alt="ProyIT"
+        priority
+        className="h-7 w-auto max-w-none sm:h-8"
+      />
       <span
-        className={`text-2xl font-extrabold tracking-tight ${light ? "text-white" : "text-navy"}`}
-      >
-        Proy<span className="text-brand-blue">IT</span>
-      </span>
-      <span
-        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${
+        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider sm:text-[11px] ${
           light ? "bg-white/15 text-white" : "bg-navy/10 text-navy"
         }`}
       >

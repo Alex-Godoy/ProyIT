@@ -1,57 +1,75 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { Logo, MODULOS } from "@/components/brand";
+import { requireUsuario } from "@/lib/auth";
+import { MODULOS } from "@/components/brand";
 
 export const metadata = { title: "Mi portal · ProyIT" };
 
-export default async function PortalPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+// Módulos que ya tienen pantalla propia; el resto se muestra como "Próximamente".
+const MODULOS_ACTIVOS: Record<string, string> = {
+  proyectos: "/portal/proyectos",
+};
 
-  const { data: perfil } = await supabase
-    .from("profiles")
-    .select("full_name, company")
-    .eq("id", user.id)
-    .maybeSingle();
+export default async function PortalPage() {
+  const { supabase, user, perfil } = await requireUsuario();
+  // El home del super usuario es su panel; el home de cliente no le sirve.
+  if (perfil?.role === "admin") redirect("/admin");
+
+  // RLS filtra: solo llegan los clientes y proyectos a los que el usuario tiene acceso.
+  const [{ count: totalProyectos }, { data: clientes }] = await Promise.all([
+    supabase.from("proyectos").select("id", { count: "exact", head: true }),
+    supabase.from("clientes").select("nombre, nombre_fantasia").order("nombre"),
+  ]);
 
   const nombre = perfil?.full_name?.split(" ")[0] ?? user.email?.split("@")[0];
+  const empresa =
+    clientes && clientes.length > 0
+      ? clientes.map((c) => c.nombre_fantasia ?? c.nombre).join(", ")
+      : perfil?.company;
 
   return (
-    <div className="min-h-screen bg-surface">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <Logo />
-          <form action="/auth/signout" method="post">
-            <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-ink hover:bg-slate-50">
-              Cerrar sesión
-            </button>
-          </form>
-        </div>
-      </header>
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
+      <h1 className="text-2xl font-bold text-navy sm:text-3xl">Hola, {nombre}</h1>
+      <p className="mt-2 text-muted">
+        {empresa ? `${empresa} · ` : ""}
+        Aquí tienes todo lo que hacemos contigo, en un solo lugar.
+      </p>
 
-      <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <h1 className="text-3xl font-bold text-navy">Hola, {nombre}</h1>
-        <p className="mt-2 text-muted">
-          {perfil?.company ? `${perfil.company} · ` : ""}
-          Estamos preparando tu portal. Estos módulos se irán activando muy pronto.
-        </p>
-
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          {MODULOS.map((m) => (
-            <article key={m.key} className="relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <span className="absolute right-5 top-5 rounded-full bg-brand-orange/10 px-3 py-1 text-xs font-semibold text-brand-orange-dark">
-                Próximamente
-              </span>
+      <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        {MODULOS.map((m) => {
+          const href = MODULOS_ACTIVOS[m.key];
+          const contenido = (
+            <>
+              {href ? (
+                <span className="absolute right-5 top-5 rounded-full bg-navy/5 px-3 py-1 text-xs font-semibold text-navy">
+                  {totalProyectos ?? 0} {totalProyectos === 1 ? "proyecto" : "proyectos"}
+                </span>
+              ) : (
+                <span className="absolute right-5 top-5 rounded-full bg-brand-orange/10 px-3 py-1 text-xs font-semibold text-brand-orange-dark">
+                  Próximamente
+                </span>
+              )}
               <div className="mb-4 inline-flex rounded-lg bg-navy/5 p-2.5 text-navy">{m.icon}</div>
               <h2 className="text-lg font-semibold text-ink">{m.titulo}</h2>
               <p className="mt-2 text-muted">{m.texto}</p>
+            </>
+          );
+
+          return href ? (
+            <Link
+              key={m.key}
+              href={href}
+              className="relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue"
+            >
+              {contenido}
+            </Link>
+          ) : (
+            <article key={m.key} className="relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              {contenido}
             </article>
-          ))}
-        </div>
-      </main>
-    </div>
+          );
+        })}
+      </div>
+    </main>
   );
 }

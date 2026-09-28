@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Rutas privadas
-  if (!user && path.startsWith("/portal")) {
+  if (!user && (path.startsWith("/portal") || path.startsWith("/admin") || path === "/aceptar-privacidad")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
   // Si ya inició sesión, no mostrar login
   if (user && path === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/portal";
+    url.pathname = "/portal"; // el super usuario sigue a /admin desde ahí
     return NextResponse.redirect(url);
   }
 

@@ -138,7 +138,12 @@ export default function Home() {
           <p>
             La transformación digital no debería ser exclusiva de las grandes empresas.
           </p>
-          <p>© {new Date().getFullYear()} ProyIT · Chile</p>
+          <p>
+            © {new Date().getFullYear()} ProyIT · Chile ·{" "}
+            <Link href="/privacidad" className="underline hover:text-white">
+              Privacidad
+            </Link>
+          </p>
         </div>
       </footer>
     </div>

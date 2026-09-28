@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { POLITICA_VERSION } from "@/lib/empresa";
 
 type Modo = "ingreso" | "registro";
 
@@ -16,11 +18,14 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
   const [empresa, setEmpresa] = useState("");
+  const [aceptaPolitica, setAceptaPolitica] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(
     params.get("error") ? "No pudimos validar tu acceso. Inténtalo de nuevo." : null
   );
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(
+    params.get("motivo") === "inactividad" ? "Cerramos tu sesión por inactividad. Ingresa de nuevo para continuar." : null
+  );
 
   const supabase = createClient();
 
@@ -49,14 +54,14 @@ export default function LoginForm() {
         email,
         password,
         options: {
-          data: { full_name: nombre, company: empresa },
+          data: { full_name: nombre, company: empresa, privacidad_version: POLITICA_VERSION },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) {
         setError(
           error.message.includes("Password")
-            ? "La contraseña debe tener al menos 6 caracteres."
+            ? "La contraseña debe tener al menos 8 caracteres y no puede ser una contraseña filtrada."
             : "No pudimos crear tu cuenta. Revisa los datos e inténtalo de nuevo."
         );
       } else if (data.session) {
@@ -118,7 +123,28 @@ export default function LoginForm() {
           </>
         )}
         <input className={input} type="email" placeholder="correo@empresa.cl" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input className={input} type="password" placeholder="Contraseña" autoComplete={modo === "ingreso" ? "current-password" : "new-password"} minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input className={input} type="password" placeholder="Contraseña" autoComplete={modo === "ingreso" ? "current-password" : "new-password"} minLength={modo === "registro" ? 8 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        {modo === "registro" && (
+          <>
+            <p className="-mt-2 text-xs text-muted">Mínimo 8 caracteres.</p>
+            <label className="flex items-start gap-3 text-sm text-ink">
+              <input
+                type="checkbox"
+                checked={aceptaPolitica}
+                onChange={(e) => setAceptaPolitica(e.target.checked)}
+                required
+                className="mt-0.5 h-4 w-4 accent-navy"
+              />
+              <span>
+                He leído y acepto la{" "}
+                <Link href="/privacidad" target="_blank" className="font-semibold text-navy hover:underline">
+                  Política de Privacidad
+                </Link>
+                .
+              </span>
+            </label>
+          </>
+        )}
 
         {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
         {aviso && <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{aviso}</p>}
@@ -132,7 +158,15 @@ export default function LoginForm() {
         </button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-4 text-center text-xs text-muted">
+        Tratamos tus datos según nuestra{" "}
+        <Link href="/privacidad" className="underline hover:text-navy">
+          Política de Privacidad
+        </Link>
+        .
+      </p>
+
+      <p className="mt-4 text-center text-sm text-muted">
         {modo === "ingreso" ? "¿Aún no tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
         <button
           type="button"

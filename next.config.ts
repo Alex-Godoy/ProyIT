@@ -3,16 +3,20 @@ import type { NextConfig } from "next";
 const esDev = process.env.NODE_ENV !== "production";
 const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://ptlpamubtydzcoufvxus.supabase.co";
 
-// Política de contenido: solo recursos propios y de Supabase. Next.js necesita
-// 'unsafe-inline' para sus scripts de hidratación, y 'unsafe-eval' + websockets
-// solo en desarrollo (recarga en caliente).
+// Captcha de Supabase Auth (Cloudflare Turnstile): script + iframe propios.
+const turnstile = "https://challenges.cloudflare.com";
+
+// Política de contenido: solo recursos propios, de Supabase y del captcha.
+// Next.js necesita 'unsafe-inline' para sus scripts de hidratación, y
+// 'unsafe-eval' + websockets solo en desarrollo (recarga en caliente).
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${esDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${turnstile}${esDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabase} https://lh3.googleusercontent.com`,
   "font-src 'self'",
-  `connect-src 'self' ${supabase} ${supabase.replace("https://", "wss://")}${esDev ? " ws: http://localhost:*" : ""}`,
+  `connect-src 'self' ${supabase} ${supabase.replace("https://", "wss://")} ${turnstile}${esDev ? " ws: http://localhost:*" : ""}`,
+  `frame-src ${turnstile}`,
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

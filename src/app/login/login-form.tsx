@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { POLITICA_VERSION } from "@/lib/empresa";
+import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 
 type Modo = "ingreso" | "registro";
+
+const MENSAJE_CAPTCHA = "No pudimos verificar que eres una persona. Espera la verificación e inténtalo de nuevo.";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -20,6 +23,9 @@ export default function LoginForm() {
   const [empresa, setEmpresa] = useState("");
   const [aceptaPolitica, setAceptaPolitica] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captcha = useRef<CaptchaHandle>(null);
+  const faltaCaptcha = !!TURNSTILE_SITE_KEY && !captchaToken;
   const [error, setError] = useState<string | null>(
     params.get("error") ? "No pudimos validar tu acceso. Inténtalo de nuevo." : null
   );
@@ -36,12 +42,18 @@ export default function LoginForm() {
     setAviso(null);
 
     if (modo === "ingreso") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: { captchaToken: captchaToken ?? undefined },
+      });
       if (error) {
         setError(
           error.message.includes("Invalid login")
             ? "Correo o contraseña incorrectos."
-            : error.message.includes("Email not confirmed")
+            : /captcha/i.test(error.message)
+              ? MENSAJE_CAPTCHA
+              : error.message.includes("Email not confirmed")
               ? "Confirma tu correo antes de ingresar (revisa tu bandeja)."
               : "No pudimos iniciar sesión. Inténtalo de nuevo."
         );
@@ -56,13 +68,16 @@ export default function LoginForm() {
         options: {
           data: { full_name: nombre, company: empresa, privacidad_version: POLITICA_VERSION },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          captchaToken: captchaToken ?? undefined,
         },
       });
       if (error) {
         setError(
-          error.message.includes("Password")
-            ? "La contraseña debe tener al menos 8 caracteres y no puede ser una contraseña filtrada."
-            : "No pudimos crear tu cuenta. Revisa los datos e inténtalo de nuevo."
+          /captcha/i.test(error.message)
+            ? MENSAJE_CAPTCHA
+            : error.message.includes("Password")
+              ? "La contraseña debe tener al menos 8 caracteres y no puede ser una contraseña filtrada."
+              : "No pudimos crear tu cuenta. Revisa los datos e inténtalo de nuevo."
         );
       } else if (data.session) {
         router.push("/portal");
@@ -71,6 +86,8 @@ export default function LoginForm() {
         setAviso("¡Listo! Te enviamos un correo para confirmar tu cuenta.");
       }
     }
+    // El token del captcha es de un solo uso: se pide uno nuevo tras cada intento.
+    captcha.current?.reset();
     setCargando(false);
   }
 
@@ -149,12 +166,20 @@ export default function LoginForm() {
         {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
         {aviso && <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{aviso}</p>}
 
+        <Captcha ref={captcha} onToken={setCaptchaToken} />
+
         <button
           type="submit"
-          disabled={cargando}
+          disabled={cargando || faltaCaptcha}
           className="w-full rounded-lg bg-brand-orange px-4 py-3 font-semibold text-white hover:bg-brand-orange-dark disabled:opacity-60"
         >
-          {cargando ? "Un momento…" : modo === "ingreso" ? "Ingresar" : "Crear cuenta"}
+          {cargando
+            ? "Un momento…"
+            : faltaCaptcha
+              ? "Verificando que eres una persona…"
+              : modo === "ingreso"
+                ? "Ingresar"
+                : "Crear cuenta"}
         </button>
       </form>
 

@@ -81,8 +81,8 @@ export default function PrivacidadPage() {
                 <strong>Datos de los proyectos:</strong> etapas, hitos, novedades y documentos que compartimos contigo.
               </li>
               <li>
-                <strong>Datos técnicos:</strong> registros de inicio de sesión y de cambios en el portal, necesarios para su
-                seguridad.
+                <strong>Datos técnicos:</strong> registros de inicio de sesión y de cambios en el portal, y señales del
+                navegador usadas por la verificación anti-bots, necesarios para su seguridad.
               </li>
             </ul>
             <p>
@@ -132,6 +132,11 @@ export default function PrivacidadPage() {
               <li>
                 <strong>Google</strong>: solo si eliges ingresar con tu cuenta de Google.
               </li>
+              <li>
+                <strong>Cloudflare (Turnstile)</strong>: verificación anti-bots al ingresar o registrarte. Procesa datos
+                técnicos de tu navegador y tu dirección IP solo para confirmar que eres una persona; no usa cookies de
+                seguimiento.
+              </li>
             </ul>
             <p>
               Dentro de cada cliente, los proyectos y documentos solo los ven las personas que ese cliente autorizó y el
@@ -171,6 +176,7 @@ export default function PrivacidadPage() {
               </li>
               <li>Documentos en almacenamiento privado, descargables solo mediante enlaces temporales.</li>
               <li>Cierre automático de sesión por inactividad y registro de auditoría de los cambios.</li>
+              <li>Verificación anti-bots en el ingreso y el registro para prevenir accesos automatizados.</li>
               <li>
                 Si ocurre una vulneración de seguridad que afecte tus datos, la notificaremos a la Agencia de Protección de
                 Datos Personales y, cuando corresponda, a ti, sin dilaciones indebidas.

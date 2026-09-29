@@ -26,6 +26,7 @@ Revisar cada 6 meses o ante cualquier cambio relevante del portal.
 | Supabase | Base de datos, autenticación, archivos | EE.UU. (us-east-1) | Aceptar su DPA (Data Processing Addendum) desde el dashboard y guardar copia |
 | Vercel | Hosting | EE.UU./global | Aceptar su DPA y guardar copia |
 | Google | Ingreso con Google (opcional) | EE.UU. | Revisar términos de Google Cloud / OAuth |
+| Cloudflare (Turnstile) | Captcha en ingreso y registro | Global | Revisar su DPA (incluido en los términos de Cloudflare) |
 
 ## 3. Medidas de seguridad implementadas
 
@@ -38,6 +39,8 @@ Revisar cada 6 meses o ante cualquier cambio relevante del portal.
   (sin HTML/SVG/JS).
 - **Encabezados HTTP**: CSP, `X-Frame-Options: DENY` (anti clickjacking), HSTS, `nosniff`, `Referrer-Policy`,
   `Permissions-Policy`, sin `X-Powered-By`, y `no-store` en páginas con datos personales.
+- **Captcha** (Cloudflare Turnstile) en ingreso y registro, validado por Supabase Auth (Attack Protection).
+  Frena la prueba masiva de contraseñas y la creación automatizada de cuentas.
 - **Sesiones**: cierre por inactividad (15 min en el panel admin, 30 min en el portal de clientes).
 - **Mensajes por código**: la URL nunca lleva texto que se muestre en pantalla (evita suplantación de contenido).
 - **Auditoría**: tabla `auditoria` registra altas, cambios (columnas) y bajas en clientes, accesos, notas,

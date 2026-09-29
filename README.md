@@ -15,6 +15,9 @@ Portal de clientes de ProyIT: comunicación y fidelización. Next.js 15 (App Rou
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://ptlpamubtydzcoufvxus.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+# Captcha (Cloudflare Turnstile). Sin esta variable no se muestra el captcha.
+# Desarrollo: 1x00000000000000000000AA (clave de prueba de Cloudflare).
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x...
 ```
 
 ## Configuración pendiente en Supabase

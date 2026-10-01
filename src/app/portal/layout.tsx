@@ -7,7 +7,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
   const { perfil } = await requireUsuario();
   return (
     <div className="min-h-screen bg-surface">
-      <PortalHeader esAdmin={perfil?.role === "admin"} />
+      <PortalHeader rol={perfil?.role ?? "cliente"} />
       {children}
       <InactivityLogout minutos={30} />
     </div>

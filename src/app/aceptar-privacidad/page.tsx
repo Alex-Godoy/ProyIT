@@ -34,6 +34,7 @@ export default async function AceptarPrivacidadPage() {
               "Usamos tus datos solo para darte acceso al portal y mostrarte tus proyectos.",
               "No los vendemos ni los usamos para publicidad.",
               "Nuestros proveedores (Supabase y Vercel) los alojan en EE.UU., con garantías de protección.",
+              "Solo el equipo de ProyIT asignado a cada proyecto ve sus datos, según su cargo.",
               "Puedes ver, corregir, descargar o pedir eliminar tus datos desde “Mis datos”.",
             ].map((t) => (
               <li key={t} className="flex gap-3">

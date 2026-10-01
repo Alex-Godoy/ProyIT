@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BUCKET_DOCUMENTOS } from "@/lib/proyectos";
-import { registrarDocumentoAction } from "@/app/admin/actions";
+import { registrarDocumentoAction } from "@/app/proyectos-acciones";
 
 const LIMITE_BYTES = 50 * 1024 * 1024;
 
@@ -20,6 +20,7 @@ function nombreSeguro(nombre: string) {
 
 export default function SubirDocumento({ proyectoId }: { proyectoId: string }) {
   const router = useRouter();
+  const pathname = usePathname();
   const input = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export default function SubirDocumento({ proyectoId }: { proyectoId: string }) {
         mimeType: archivo.type,
       });
       if (res.error) setError(res.error);
-      else router.refresh();
+      else router.replace(`${pathname}?tab=documentos&ok=documento_subido`, { scroll: false });
     }
 
     setSubiendo(false);

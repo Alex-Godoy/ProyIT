@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { requireUsuario } from "@/lib/auth";
+import { inicioSegunRol, requireUsuario } from "@/lib/auth";
 import { MODULOS } from "@/components/brand";
 
 export const metadata = { title: "Mi portal · ProyIT" };
@@ -12,8 +12,8 @@ const MODULOS_ACTIVOS: Record<string, string> = {
 
 export default async function PortalPage() {
   const { supabase, user, perfil } = await requireUsuario();
-  // El home del super usuario es su panel; el home de cliente no le sirve.
-  if (perfil?.role === "admin") redirect("/admin");
+  // Super usuario y equipo tienen su propio inicio; el de cliente no les sirve.
+  if (perfil?.role === "admin" || perfil?.role === "equipo") redirect(inicioSegunRol(perfil.role));
 
   // RLS filtra: solo llegan los clientes y proyectos a los que el usuario tiene acceso.
   const [{ count: totalProyectos }, { data: clientes }] = await Promise.all([

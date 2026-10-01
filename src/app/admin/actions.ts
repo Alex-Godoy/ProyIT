@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { BUCKET_DOCUMENTOS, ETAPAS } from "@/lib/proyectos";
 import { REGIONES, normalizarRut } from "@/lib/clientes";
+import { esCargo } from "@/lib/permisos";
 import type { CodigoMensaje } from "@/lib/mensajes";
 
 // Todas las acciones validan el rol admin aquí y, además, RLS lo vuelve a
@@ -39,15 +40,6 @@ function validarProyecto(datos: ReturnType<typeof datosProyecto>): CodigoMensaje
   return null;
 }
 
-async function tocarProyecto(proyectoId: string) {
-  const { supabase } = await requireAdmin();
-  // El trigger actualiza updated_at: así el cliente ve cuándo hubo novedades.
-  await supabase.from("proyectos").update({ updated_at: new Date().toISOString() }).eq("id", proyectoId);
-  revalidatePath(`/admin/proyectos/${proyectoId}`);
-  revalidatePath(`/portal/proyectos/${proyectoId}`);
-  revalidatePath("/portal/proyectos");
-}
-
 // ---------------------------------------------------------------------------
 // Proyectos
 // ---------------------------------------------------------------------------
@@ -78,7 +70,7 @@ export async function actualizarProyectoAction(proyectoId: string, fd: FormData)
   revalidatePath("/admin/proyectos");
   revalidatePath(`/portal/proyectos/${proyectoId}`);
   revalidatePath("/portal/proyectos");
-  volver(`${path}?ok=1`);
+  volver(`${path}?tab=resumen&ok=guardado`);
 }
 
 export async function eliminarProyectoAction(proyectoId: string) {
@@ -99,103 +91,6 @@ export async function eliminarProyectoAction(proyectoId: string) {
   revalidatePath("/portal/proyectos");
   redirect("/admin/proyectos");
 }
-
-// ---------------------------------------------------------------------------
-// Hitos
-// ---------------------------------------------------------------------------
-
-export async function crearHitoAction(proyectoId: string, fd: FormData) {
-  const { supabase } = await requireAdmin();
-  const titulo = texto(fd, "titulo");
-  if (!titulo) volver(`/admin/proyectos/${proyectoId}`, "hito_sin_titulo");
-
-  const { count } = await supabase
-    .from("proyecto_hitos")
-    .select("id", { count: "exact", head: true })
-    .eq("proyecto_id", proyectoId);
-
-  const { error } = await supabase.from("proyecto_hitos").insert({
-    proyecto_id: proyectoId,
-    titulo,
-    descripcion: texto(fd, "descripcion"),
-    fecha_estimada: texto(fd, "fecha_estimada"),
-    orden: (count ?? 0) + 1,
-  });
-  if (error) volver(`/admin/proyectos/${proyectoId}`, "hito_no_agregado");
-  await tocarProyecto(proyectoId);
-}
-
-export async function alternarHitoAction(proyectoId: string, hitoId: string, completado: boolean) {
-  const { supabase } = await requireAdmin();
-  await supabase
-    .from("proyecto_hitos")
-    .update({ completado_at: completado ? null : new Date().toISOString() })
-    .eq("id", hitoId);
-  await tocarProyecto(proyectoId);
-}
-
-export async function eliminarHitoAction(proyectoId: string, hitoId: string) {
-  const { supabase } = await requireAdmin();
-  await supabase.from("proyecto_hitos").delete().eq("id", hitoId);
-  await tocarProyecto(proyectoId);
-}
-
-// ---------------------------------------------------------------------------
-// Bitácora
-// ---------------------------------------------------------------------------
-
-export async function crearNovedadAction(proyectoId: string, fd: FormData) {
-  const { supabase, user } = await requireAdmin();
-  const contenido = texto(fd, "contenido");
-  if (!contenido) volver(`/admin/proyectos/${proyectoId}`, "novedad_vacia");
-
-  const { error } = await supabase
-    .from("proyecto_novedades")
-    .insert({ proyecto_id: proyectoId, autor_id: user.id, contenido });
-  if (error) volver(`/admin/proyectos/${proyectoId}`, "novedad_no_publicada");
-  await tocarProyecto(proyectoId);
-}
-
-export async function eliminarNovedadAction(proyectoId: string, novedadId: string) {
-  const { supabase } = await requireAdmin();
-  await supabase.from("proyecto_novedades").delete().eq("id", novedadId);
-  await tocarProyecto(proyectoId);
-}
-
-// ---------------------------------------------------------------------------
-// Documentos (el archivo lo sube el navegador directo a Storage; aquí solo
-// se registra, para no pasar archivos grandes por la función del servidor)
-// ---------------------------------------------------------------------------
-
-export async function registrarDocumentoAction(
-  proyectoId: string,
-  doc: { nombre: string; storagePath: string; tamanoBytes: number; mimeType: string },
-) {
-  const { supabase } = await requireAdmin();
-  if (!doc.storagePath.startsWith(`${proyectoId}/`)) return { error: "Ruta de archivo inválida." };
-
-  const { error } = await supabase.from("proyecto_documentos").insert({
-    proyecto_id: proyectoId,
-    nombre: doc.nombre,
-    storage_path: doc.storagePath,
-    tamano_bytes: doc.tamanoBytes,
-    mime_type: doc.mimeType || null,
-  });
-  if (error) {
-    await supabase.storage.from(BUCKET_DOCUMENTOS).remove([doc.storagePath]);
-    return { error: "No se pudo registrar el documento." };
-  }
-  await tocarProyecto(proyectoId);
-  return { error: null };
-}
-
-export async function eliminarDocumentoAction(proyectoId: string, documentoId: string, storagePath: string) {
-  const { supabase } = await requireAdmin();
-  await supabase.storage.from(BUCKET_DOCUMENTOS).remove([storagePath]);
-  await supabase.from("proyecto_documentos").delete().eq("id", documentoId);
-  await tocarProyecto(proyectoId);
-}
-
 
 // ---------------------------------------------------------------------------
 // Clientes
@@ -286,7 +181,7 @@ export async function actualizarClienteAction(clienteId: string, fd: FormData) {
 
   revalidarCliente(clienteId);
   revalidatePath("/portal", "layout");
-  volver(`${path}?ok=1`);
+  volver(`${path}?ok=guardado`);
 }
 
 export async function eliminarClienteAction(clienteId: string) {
@@ -324,6 +219,7 @@ export async function agregarAccesoAction(clienteId: string, fd: FormData) {
     volver(path, error.code === "23505" ? "acceso_duplicado" : "acceso_no_agregado");
   }
   revalidarCliente(clienteId);
+  volver(`${path}?ok=acceso_agregado`);
 }
 
 export async function quitarAccesoAction(clienteId: string, accesoId: string) {
@@ -355,4 +251,74 @@ export async function actualizarSolicitudAction(solicitudId: string, fd: FormDat
 
   revalidatePath("/admin", "layout");
   revalidatePath("/portal/mis-datos");
+}
+
+// ---------------------------------------------------------------------------
+// Equipo ProyIT (ingenieros, técnicos, etc.)
+// ---------------------------------------------------------------------------
+
+function revalidarEquipo() {
+  revalidatePath("/admin", "layout");
+  revalidatePath("/equipo", "layout");
+}
+
+export async function invitarMiembroAction(fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const email = texto(fd, "email")?.toLowerCase();
+  const nombre = texto(fd, "nombre");
+  const cargo = texto(fd, "cargo");
+  if (!email || !EMAIL_VALIDO.test(email)) volver("/admin/equipo", "email_invalido");
+  if (!nombre) volver("/admin/equipo", "miembro_sin_nombre");
+  if (!esCargo(cargo)) volver("/admin/equipo", "miembro_cargo_invalido");
+
+  // Un cliente no puede ser a la vez integrante del equipo (vería otros proyectos).
+  const { count } = await supabase
+    .from("cliente_accesos")
+    .select("id", { count: "exact", head: true })
+    .eq("email", email);
+  if (count) volver("/admin/equipo", "miembro_es_cliente");
+
+  const { error } = await supabase
+    .from("equipo")
+    .insert({ email, nombre, cargo, telefono: texto(fd, "telefono") });
+  if (error) volver("/admin/equipo", error.code === "23505" ? "miembro_duplicado" : "miembro_no_guardado");
+  revalidarEquipo();
+  volver("/admin/equipo?ok=miembro_invitado");
+}
+
+export async function actualizarMiembroAction(miembroId: string, fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const nombre = texto(fd, "nombre");
+  const cargo = texto(fd, "cargo");
+  if (!nombre) volver("/admin/equipo", "miembro_sin_nombre");
+  if (!esCargo(cargo)) volver("/admin/equipo", "miembro_cargo_invalido");
+
+  const { error } = await supabase
+    .from("equipo")
+    .update({ nombre, cargo, telefono: texto(fd, "telefono"), activo: fd.get("activo") === "on" })
+    .eq("id", miembroId);
+  if (error) volver("/admin/equipo", "miembro_no_guardado");
+  revalidarEquipo();
+  volver("/admin/equipo?ok=miembro_actualizado");
+}
+
+export async function asignarMiembroAction(proyectoId: string, fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const path = `/admin/proyectos/${proyectoId}?tab=equipo`;
+  const equipoId = texto(fd, "equipo_id");
+  if (!equipoId) volver(path, "miembro_no_asignado");
+
+  const { error } = await supabase.from("proyecto_equipo").insert({ proyecto_id: proyectoId, equipo_id: equipoId });
+  if (error && error.code !== "23505") volver(path, "miembro_no_asignado");
+  revalidarEquipo();
+  revalidatePath(`/portal/proyectos/${proyectoId}`);
+  volver(`${path}&ok=equipo_asignado`);
+}
+
+export async function quitarMiembroAction(proyectoId: string, equipoId: string) {
+  const { supabase } = await requireAdmin();
+  await supabase.from("proyecto_equipo").delete().eq("proyecto_id", proyectoId).eq("equipo_id", equipoId);
+  revalidarEquipo();
+  revalidatePath(`/portal/proyectos/${proyectoId}`);
+  volver(`/admin/proyectos/${proyectoId}?tab=equipo&ok=equipo_quitado`);
 }

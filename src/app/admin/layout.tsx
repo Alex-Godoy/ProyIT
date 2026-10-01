@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   await requireAdmin();
   return (
     <div className="min-h-screen bg-surface">
-      <PortalHeader esAdmin />
+      <PortalHeader rol="admin" />
       <AdminNav />
       {children}
       {/* Sesión más corta: el panel da acceso a datos de todos los clientes. */}

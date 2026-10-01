@@ -81,6 +81,10 @@ export default function PrivacidadPage() {
                 <strong>Datos de los proyectos:</strong> etapas, hitos, novedades y documentos que compartimos contigo.
               </li>
               <li>
+                <strong>Datos del equipo de ProyIT:</strong> nombre, correo, teléfono y cargo de los ingenieros, técnicos y
+                personal de soporte que trabajan en los proyectos.
+              </li>
+              <li>
                 <strong>Datos técnicos:</strong> registros de inicio de sesión y de cambios en el portal, y señales del
                 navegador usadas por la verificación anti-bots, necesarios para su seguridad.
               </li>
@@ -140,7 +144,12 @@ export default function PrivacidadPage() {
             </ul>
             <p>
               Dentro de cada cliente, los proyectos y documentos solo los ven las personas que ese cliente autorizó y el
-              equipo de ProyIT.
+              equipo de ProyIT asignado a cada proyecto.
+            </p>
+            <p>
+              Cada integrante de nuestro equipo accede únicamente a los proyectos en que trabaja, y a los datos de contacto
+              y dirección del cliente necesarios para ejecutarlos, con permisos según su cargo. A su vez, el cliente ve el
+              nombre y cargo de las personas asignadas a su proyecto, pero no sus datos de contacto personales.
             </p>
           </section>
 

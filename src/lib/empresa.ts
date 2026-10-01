@@ -11,5 +11,5 @@ export const RESPONSABLE = {
 
 // Cambiar la versión obliga a todos los usuarios a revisar y aceptar de
 // nuevo la política en su próximo ingreso.
-export const POLITICA_VERSION = "2026-09-28";
-export const POLITICA_FECHA = "28 de septiembre de 2026";
+export const POLITICA_VERSION = "2026-09-30";
+export const POLITICA_FECHA = "30 de septiembre de 2026";

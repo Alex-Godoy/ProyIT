@@ -7,8 +7,10 @@ import {
   ResumenProyecto,
   TextoHito,
   TextoNovedad,
+  cargarContextoProyecto,
   cargarProyecto,
 } from "@/components/proyectos/detalle";
+import { etiquetaCargo } from "@/lib/permisos";
 
 export default async function DetalleProyectoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,6 +20,7 @@ export default async function DetalleProyectoPage({ params }: { params: Promise<
   if (!datos) notFound();
   const { proyecto, hitos, novedades, documentos, urls } = datos;
   const completados = hitos.filter((h) => h.completado_at).length;
+  const { equipo } = await cargarContextoProyecto(supabase, proyecto);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
@@ -28,6 +31,25 @@ export default async function DetalleProyectoPage({ params }: { params: Promise<
       <div className="mt-3">
         <ResumenProyecto proyecto={proyecto} />
       </div>
+
+      {equipo.length > 0 && (
+        <section className="mt-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <h2 className="text-lg font-semibold text-ink">Tu equipo ProyIT</h2>
+          <ul className="mt-4 flex flex-wrap gap-3">
+            {equipo.map((e) => (
+              <li key={e.nombre + e.cargo} className="flex items-center gap-3 rounded-xl px-3 py-2 ring-1 ring-slate-200">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-navy/5 text-sm font-bold text-navy">
+                  {e.nombre.charAt(0).toUpperCase()}
+                </span>
+                <span>
+                  <span className="block text-sm font-medium text-ink">{e.nombre}</span>
+                  <span className="block text-xs text-muted">{etiquetaCargo(e.cargo)}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-3">

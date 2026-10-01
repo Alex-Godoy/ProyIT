@@ -62,6 +62,29 @@ export async function cargarProyecto(supabase: SupabaseClient, id: string) {
   };
 }
 
+// Equipo asignado (solo nombre y cargo) y datos de contacto del cliente.
+export async function cargarContextoProyecto(supabase: SupabaseClient, proyecto: Proyecto) {
+  const [{ data: equipo }, { data: cliente }] = await Promise.all([
+    supabase.rpc("equipo_del_proyecto", { p_proyecto_id: proyecto.id }),
+    supabase
+      .from("clientes")
+      .select("nombre, tipo, telefono, email, direccion, comuna")
+      .eq("id", proyecto.cliente_id)
+      .maybeSingle(),
+  ]);
+  return {
+    equipo: (equipo ?? []) as { nombre: string; cargo: string }[],
+    cliente: cliente as {
+      nombre: string;
+      tipo: string;
+      telefono: string | null;
+      email: string | null;
+      direccion: string | null;
+      comuna: string | null;
+    } | null,
+  };
+}
+
 export function ResumenProyecto({ proyecto }: { proyecto: Proyecto }) {
   return (
     <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">

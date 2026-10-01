@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { COLUMNAS_PROYECTO, formatearFechaHora, type Proyecto } from "@/lib/proyectos";
 import { nombreVisible } from "@/lib/clientes";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
+import { ChipSinLeer, cargarSinLeer } from "@/components/proyectos/sin-leer";
 
 type FilaProyecto = Proyecto & {
   cliente: { nombre: string; nombre_fantasia: string | null; tipo: string } | null;
@@ -11,12 +12,14 @@ type FilaProyecto = Proyecto & {
 export default async function AdminProyectosPage() {
   const { supabase } = await requireAdmin();
 
-  const { data } = await supabase
-    .from("proyectos")
-    .select(
-      `${COLUMNAS_PROYECTO}, cliente:clientes(nombre, nombre_fantasia, tipo)`,
-    )
-    .order("updated_at", { ascending: false });
+  const [{ data }, sinLeer] = await Promise.all([
+    supabase
+      .from("proyectos")
+      .select(`${COLUMNAS_PROYECTO}, cliente:clientes(nombre, nombre_fantasia, tipo)`)
+      .order("updated_at", { ascending: false }),
+    cargarSinLeer(supabase),
+  ]);
+  const enlace = (id: string) => `/admin/proyectos/${id}${sinLeer[id] ? "?tab=mensajes" : ""}`;
   const proyectos = (data ?? []) as unknown as FilaProyecto[];
 
   return (
@@ -46,7 +49,7 @@ export default async function AdminProyectosPage() {
           {proyectos.map((p) => (
             <li key={p.id}>
               <Link
-                href={`/admin/proyectos/${p.id}`}
+                href={enlace(p.id)}
                 className="block rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 active:bg-slate-50"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -56,6 +59,11 @@ export default async function AdminProyectosPage() {
                 <p className="mt-1 text-sm text-ink">
                   {p.cliente ? nombreVisible(p.cliente) : "—"}
                 </p>
+                {sinLeer[p.id] ? (
+                  <div className="mt-2">
+                    <ChipSinLeer cantidad={sinLeer[p.id]} />
+                  </div>
+                ) : null}
                 <div className="mt-3">
                   <BarraAvance avance={p.avance} />
                 </div>
@@ -81,9 +89,14 @@ export default async function AdminProyectosPage() {
               {proyectos.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50">
                   <td className="px-5 py-3">
-                    <Link href={`/admin/proyectos/${p.id}`} className="font-semibold text-navy hover:underline">
+                    <Link href={enlace(p.id)} className="font-semibold text-navy hover:underline">
                       {p.nombre}
                     </Link>
+                    {sinLeer[p.id] ? (
+                      <div className="mt-1">
+                        <ChipSinLeer cantidad={sinLeer[p.id]} />
+                      </div>
+                    ) : null}
                   </td>
                   <td className="px-5 py-3 text-ink">
                     {p.cliente ? nombreVisible(p.cliente) : "—"}

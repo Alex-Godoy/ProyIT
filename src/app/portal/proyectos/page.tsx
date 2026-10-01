@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUsuario } from "@/lib/auth";
 import { COLUMNAS_PROYECTO, formatearFecha, type Proyecto } from "@/lib/proyectos";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
+import { ChipSinLeer, cargarSinLeer } from "@/components/proyectos/sin-leer";
 
 export const metadata = { title: "Mis proyectos · ProyIT" };
 
@@ -9,10 +10,10 @@ export default async function MisProyectosPage() {
   const { supabase } = await requireUsuario();
 
   // RLS ya filtra: solo llegan los proyectos del usuario o de su empresa.
-  const { data } = await supabase
-    .from("proyectos")
-    .select(COLUMNAS_PROYECTO)
-    .order("updated_at", { ascending: false });
+  const [{ data }, sinLeer] = await Promise.all([
+    supabase.from("proyectos").select(COLUMNAS_PROYECTO).order("updated_at", { ascending: false }),
+    cargarSinLeer(supabase),
+  ]);
   const proyectos = (data ?? []) as Proyecto[];
 
   return (
@@ -33,7 +34,7 @@ export default async function MisProyectosPage() {
           {proyectos.map((p) => (
             <Link
               key={p.id}
-              href={`/portal/proyectos/${p.id}`}
+              href={`/portal/proyectos/${p.id}${sinLeer[p.id] ? "#mensajes" : ""}`}
               className="flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue"
             >
               <div className="flex items-start justify-between gap-3">
@@ -42,7 +43,10 @@ export default async function MisProyectosPage() {
               </div>
               {p.descripcion && <p className="line-clamp-2 text-muted">{p.descripcion}</p>}
               <BarraAvance avance={p.avance} />
-              <p className="text-sm text-muted">Término estimado: {formatearFecha(p.fecha_termino_estimada)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-muted">Término estimado: {formatearFecha(p.fecha_termino_estimada)}</p>
+                <ChipSinLeer cantidad={sinLeer[p.id]} />
+              </div>
             </Link>
           ))}
         </div>

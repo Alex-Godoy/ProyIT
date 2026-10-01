@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireEquipo, rolEnProyecto } from "@/lib/auth";
 import { etiquetaCargo } from "@/lib/permisos";
 import { cargarContextoProyecto, cargarProyecto } from "@/components/proyectos/detalle";
+import { cargarMensajes } from "@/components/proyectos/mensajes";
 import ProyectoWorkspace, { pestanaValida } from "@/components/proyectos/workspace";
 import { Avisos } from "@/components/admin/avisos";
 
@@ -21,7 +22,10 @@ export default async function EquipoProyectoPage({
   if (!rol) notFound();
   const datos = await cargarProyecto(supabase, id);
   if (!datos) notFound();
-  const contexto = await cargarContextoProyecto(supabase, datos.proyecto);
+  const [contexto, mensajes] = await Promise.all([
+    cargarContextoProyecto(supabase, datos.proyecto),
+    cargarMensajes(supabase, id, user.id),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
@@ -43,6 +47,7 @@ export default async function EquipoProyectoPage({
         {...datos}
         equipo={contexto.equipo}
         cliente={contexto.cliente}
+        mensajes={mensajes}
       />
     </main>
   );

@@ -4,6 +4,7 @@ import { etiquetaCargo, puede } from "@/lib/permisos";
 import { COLUMNAS_PROYECTO, formatearFecha, formatearFechaHora, type Proyecto } from "@/lib/proyectos";
 import { nombreVisible } from "@/lib/clientes";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
+import { ChipSinLeer, cargarSinLeer } from "@/components/proyectos/sin-leer";
 import { ESTADOS_ABIERTOS, estadoSla, type Ticket } from "@/lib/tickets";
 
 type FilaProyecto = Proyecto & { cliente: { nombre: string; nombre_fantasia: string | null } | null };
@@ -12,7 +13,7 @@ export default async function EquipoInicioPage() {
   const { supabase, miembro } = await requireEquipo();
 
   // RLS devuelve solo los proyectos asignados a esta persona.
-  const [{ data }, { data: ticketsData }] = await Promise.all([
+  const [{ data }, { data: ticketsData }, sinLeer] = await Promise.all([
     supabase
       .from("proyectos")
       .select(`${COLUMNAS_PROYECTO}, cliente:clientes(nombre, nombre_fantasia)`)
@@ -22,6 +23,7 @@ export default async function EquipoInicioPage() {
       .from("tickets")
       .select("vence_at, primera_respuesta_at, estado")
       .in("estado", ESTADOS_ABIERTOS),
+    cargarSinLeer(supabase),
   ]);
   const proyectos = (data ?? []) as unknown as FilaProyecto[];
   const tickets = (ticketsData ?? []) as Pick<Ticket, "vence_at" | "primera_respuesta_at" | "estado">[];
@@ -78,7 +80,7 @@ export default async function EquipoInicioPage() {
           {enCurso.map((p) => (
             <li key={p.id}>
               <Link
-                href={`/equipo/proyectos/${p.id}`}
+                href={`/equipo/proyectos/${p.id}${sinLeer[p.id] ? "?tab=mensajes" : ""}`}
                 className="flex h-full flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue sm:p-5"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -88,6 +90,11 @@ export default async function EquipoInicioPage() {
                   </div>
                   <EtapaBadge etapa={p.etapa} />
                 </div>
+                {sinLeer[p.id] ? (
+                  <div className="mt-2">
+                    <ChipSinLeer cantidad={sinLeer[p.id]} />
+                  </div>
+                ) : null}
                 <div className="mt-auto pt-4">
                   <BarraAvance avance={p.avance} />
                   <p className="mt-2 text-xs text-muted">
@@ -107,12 +114,18 @@ export default async function EquipoInicioPage() {
           <ul className="mt-3 divide-y divide-slate-100 rounded-2xl bg-white ring-1 ring-slate-200">
             {entregados.map((p) => (
               <li key={p.id}>
-                <Link href={`/equipo/proyectos/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+                <Link
+                  href={`/equipo/proyectos/${p.id}${sinLeer[p.id] ? "?tab=mensajes" : ""}`}
+                  className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50"
+                >
                   <span className="min-w-0">
                     <span className="block truncate font-medium text-ink">{p.nombre}</span>
                     <span className="block truncate text-xs text-muted">{p.cliente ? nombreVisible(p.cliente) : ""}</span>
                   </span>
-                  <EtapaBadge etapa={p.etapa} />
+                  <span className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <ChipSinLeer cantidad={sinLeer[p.id]} />
+                    <EtapaBadge etapa={p.etapa} />
+                  </span>
                 </Link>
               </li>
             ))}

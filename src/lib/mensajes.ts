@@ -56,6 +56,7 @@ export const MENSAJES_OK = {
   ticket_asignado: "Responsable asignado. Ya puede ver y atender el ticket.",
   ticket_sin_responsable: "El ticket quedó sin responsable.",
   mensaje_enviado: "Mensaje enviado.",
+  mensaje_eliminado: "Mensaje eliminado.",
 } as const;
 
 export type CodigoOk = keyof typeof MENSAJES_OK;

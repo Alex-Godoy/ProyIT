@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requirePermiso } from "@/lib/auth";
-import { BUCKET_DOCUMENTOS, ETAPAS } from "@/lib/proyectos";
+import { requireAdmin, requirePermiso, requireUsuario } from "@/lib/auth";
+import { BUCKET_DOCUMENTOS, ETAPAS, MAX_MENSAJE } from "@/lib/proyectos";
 import type { CodigoMensaje, CodigoOk } from "@/lib/mensajes";
 
 // Acciones sobre el contenido de un proyecto, compartidas por el panel del
@@ -12,7 +12,7 @@ import type { CodigoMensaje, CodigoOk } from "@/lib/mensajes";
 
 const BASES = ["/admin/proyectos", "/equipo/proyectos"] as const;
 type Base = (typeof BASES)[number];
-type Pestana = "resumen" | "hitos" | "documentos" | "bitacora";
+type Pestana = "resumen" | "mensajes" | "hitos" | "documentos" | "bitacora";
 
 function base(valor: string): Base {
   return (BASES as readonly string[]).includes(valor) ? (valor as Base) : "/equipo/proyectos";
@@ -188,4 +188,37 @@ export async function eliminarDocumentoAction(b: string, proyectoId: string, doc
   }
   refrescar(proyectoId);
   volver(b, proyectoId, "documentos", { ok: "documento_eliminado" });
+}
+
+// ---------------------------------------------------------------------------
+// Mensajes (cliente, equipo asignado y super usuario). Quién puede escribir
+// lo decide RLS (todo el que ve el proyecto); autor y cargo los fija la base.
+// ---------------------------------------------------------------------------
+
+export async function enviarMensajeAction(proyectoId: string, contenido: string): Promise<{ error: string | null }> {
+  const { supabase } = await requireUsuario();
+  const limpio = contenido.trim().slice(0, MAX_MENSAJE);
+  if (!limpio) return { error: "Escribe un mensaje." };
+
+  const { error } = await supabase.from("proyecto_mensajes").insert({ proyecto_id: proyectoId, contenido: limpio });
+  if (error) return { error: "No pudimos enviar el mensaje. Inténtalo de nuevo." };
+  refrescar(proyectoId);
+  return { error: null };
+}
+
+// Marca como leído hasta el último mensaje que la persona tiene en pantalla
+// (no "ahora", para no saltarse uno que llegó mientras cargaba).
+export async function marcarMensajesLeidosAction(proyectoId: string, hasta: string) {
+  const { supabase, user } = await requireUsuario();
+  if (Number.isNaN(Date.parse(hasta))) return;
+  await supabase
+    .from("proyecto_lecturas")
+    .upsert({ proyecto_id: proyectoId, user_id: user.id, leido_at: hasta }, { onConflict: "proyecto_id,user_id" });
+}
+
+export async function eliminarMensajeAction(proyectoId: string, mensajeId: string) {
+  const { supabase } = await requireAdmin();
+  await supabase.from("proyecto_mensajes").delete().eq("id", mensajeId).eq("proyecto_id", proyectoId);
+  refrescar(proyectoId);
+  volver("/admin/proyectos", proyectoId, "mensajes", { ok: "mensaje_eliminado" });
 }

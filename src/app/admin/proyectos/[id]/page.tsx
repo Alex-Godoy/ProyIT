@@ -5,6 +5,7 @@ import { cargarOpcionesClientes } from "@/lib/admin-datos";
 import { etiquetaCargo } from "@/lib/permisos";
 import { cargarContextoProyecto, cargarProyecto } from "@/components/proyectos/detalle";
 import ProyectoWorkspace, { pestanaValida } from "@/components/proyectos/workspace";
+import { cargarMensajes } from "@/components/proyectos/mensajes";
 import ProyectoForm from "@/components/admin/proyecto-form";
 import { Avisos } from "@/components/admin/avisos";
 import { BotonEnviar, inputClase, labelClase } from "@/components/admin/ui";
@@ -29,14 +30,15 @@ export default async function AdminProyectoPage({
   const { id } = await params;
   const { error, ok, tab } = await searchParams;
   const pestana = pestanaValida(tab);
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
 
   const datos = await cargarProyecto(supabase, id);
   if (!datos) notFound();
   const { proyecto } = datos;
 
-  const [contexto, clientes, { data: miembrosData }, { data: asignadosData }] = await Promise.all([
+  const [contexto, mensajes, clientes, { data: miembrosData }, { data: asignadosData }] = await Promise.all([
     cargarContextoProyecto(supabase, proyecto),
+    cargarMensajes(supabase, id, user.id),
     pestana === "resumen" ? cargarOpcionesClientes(supabase) : Promise.resolve([]),
     supabase.from("equipo").select("id, nombre, cargo, activo, user_id").order("nombre"),
     supabase.from("proyecto_equipo").select("equipo_id").eq("proyecto_id", id),
@@ -66,6 +68,7 @@ export default async function AdminProyectoPage({
         {...datos}
         equipo={contexto.equipo}
         cliente={contexto.cliente}
+        mensajes={mensajes}
         extraResumen={
           <>
             <section className={tarjeta}>
@@ -80,7 +83,7 @@ export default async function AdminProyectoPage({
             <section className="rounded-2xl border border-red-200 p-5 sm:p-6">
               <h2 className="font-semibold text-red-700">Eliminar proyecto</h2>
               <p className="mt-1 text-sm text-muted">
-                Borra el proyecto con sus hitos, bitácora y documentos. No se puede deshacer.
+                Borra el proyecto con sus hitos, bitácora, mensajes y documentos. No se puede deshacer.
               </p>
               <form action={eliminarProyectoAction.bind(null, proyecto.id)} className="mt-4">
                 <BotonEnviar variante="peligro" confirmar={`¿Eliminar definitivamente "${proyecto.nombre}"?`}>

@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { inicioSegunRol, requireUsuario } from "@/lib/auth";
 import { MODULOS } from "@/components/brand";
 import { ESTADOS_ABIERTOS } from "@/lib/tickets";
+import { textoSinLeer } from "@/lib/proyectos";
+import { cargarSinLeer } from "@/components/proyectos/sin-leer";
 
 export const metadata = { title: "Mi portal · ProyIT" };
 
@@ -18,15 +20,20 @@ export default async function PortalPage() {
   if (perfil?.role === "admin" || perfil?.role === "equipo") redirect(inicioSegunRol(perfil.role));
 
   // RLS filtra: solo llegan los clientes y proyectos a los que el usuario tiene acceso.
-  const [{ count: totalProyectos }, { data: clientes }, { data: ticketsAbiertos }] = await Promise.all([
+  const [{ count: totalProyectos }, { data: clientes }, { data: ticketsAbiertos }, sinLeer] = await Promise.all([
     supabase.from("proyectos").select("id", { count: "exact", head: true }),
     supabase.from("clientes").select("nombre, nombre_fantasia").order("nombre"),
     supabase.from("tickets").select("estado").in("estado", ESTADOS_ABIERTOS),
+    cargarSinLeer(supabase),
   ]);
+  const mensajesNuevos = Object.values(sinLeer).reduce((a, b) => a + b, 0);
   const nTickets = ticketsAbiertos?.length ?? 0;
   const esperandome = ticketsAbiertos?.filter((t) => t.estado === "esperando_cliente").length ?? 0;
   const contadores: Record<string, { texto: string; alerta?: boolean }> = {
-    proyectos: { texto: `${totalProyectos ?? 0} ${totalProyectos === 1 ? "proyecto" : "proyectos"}` },
+    proyectos:
+      mensajesNuevos > 0
+        ? { texto: textoSinLeer(mensajesNuevos), alerta: true }
+        : { texto: `${totalProyectos ?? 0} ${totalProyectos === 1 ? "proyecto" : "proyectos"}` },
     soporte:
       esperandome > 0
         ? { texto: `${esperandome} esperando tu respuesta`, alerta: true }

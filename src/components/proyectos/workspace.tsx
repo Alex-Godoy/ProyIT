@@ -9,6 +9,7 @@ import {
   TextoHito,
   TextoNovedad,
 } from "@/components/proyectos/detalle";
+import { ConversacionProyecto, type DatosMensajes } from "@/components/proyectos/mensajes";
 import SubirDocumento from "@/components/admin/subir-documento";
 import { BotonEnviar, inputClase, labelClase } from "@/components/admin/ui";
 import {
@@ -24,6 +25,7 @@ import {
 
 export const PESTANAS = [
   { valor: "resumen", etiqueta: "Resumen" },
+  { valor: "mensajes", etiqueta: "Mensajes" },
   { valor: "hitos", etiqueta: "Hitos" },
   { valor: "documentos", etiqueta: "Documentos" },
   { valor: "bitacora", etiqueta: "Bitácora" },
@@ -60,6 +62,7 @@ export default function ProyectoWorkspace({
   urls,
   equipo,
   cliente,
+  mensajes,
   extraResumen,
   extraEquipo,
 }: {
@@ -73,6 +76,7 @@ export default function ProyectoWorkspace({
   urls: Record<string, string>;
   equipo: IntegranteProyecto[];
   cliente: ClienteResumen;
+  mensajes: DatosMensajes;
   // Contenido solo del super usuario (formulario de datos, gestión de equipo).
   extraResumen?: ReactNode;
   extraEquipo?: ReactNode;
@@ -105,6 +109,14 @@ export default function ProyectoWorkspace({
                 }`}
               >
                 {p.etiqueta}
+                {p.valor === "mensajes" && !activa && mensajes.sinLeer > 0 && (
+                  <span
+                    className="rounded-full bg-brand-orange px-1.5 text-xs text-white"
+                    aria-label={`${mensajes.sinLeer} sin leer`}
+                  >
+                    {mensajes.sinLeer}
+                  </span>
+                )}
                 {conteo[p.valor] !== undefined && (
                   <span
                     className={`rounded-full px-1.5 text-xs ${activa ? "bg-white/20" : "bg-slate-100 text-muted"}`}
@@ -219,6 +231,10 @@ export default function ProyectoWorkspace({
 
             {extraResumen}
           </>
+        )}
+
+        {pestana === "mensajes" && (
+          <ConversacionProyecto proyectoId={proyecto.id} datos={mensajes} vista="equipo" puedeEliminar={rol === "admin"} />
         )}
 
         {pestana === "hitos" && (

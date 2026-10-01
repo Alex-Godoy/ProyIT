@@ -52,6 +52,23 @@ export type Documento = {
 
 export const BUCKET_DOCUMENTOS = "proyecto-documentos";
 
+// Conversación del proyecto. Autor, nombre y cargo los fija la base de datos.
+export type MensajeProyecto = {
+  id: string;
+  autor_id: string | null;
+  autor_tipo: "cliente" | "equipo";
+  autor_nombre: string;
+  autor_cargo: string | null;
+  contenido: string;
+  created_at: string;
+};
+
+export const MAX_MENSAJE = 4000;
+
+export function textoSinLeer(n: number) {
+  return `${n} ${n === 1 ? "mensaje nuevo" : "mensajes nuevos"}`;
+}
+
 // Las columnas `date` llegan como "2026-10-15"; se formatean sin pasar por la
 // zona horaria para que no se corran un día.
 export function formatearFecha(fecha: string | null) {

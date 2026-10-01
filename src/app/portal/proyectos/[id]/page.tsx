@@ -10,17 +10,21 @@ import {
   cargarContextoProyecto,
   cargarProyecto,
 } from "@/components/proyectos/detalle";
+import { ConversacionProyecto, cargarMensajes } from "@/components/proyectos/mensajes";
 import { etiquetaCargo } from "@/lib/permisos";
 
 export default async function DetalleProyectoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase } = await requireUsuario();
+  const { supabase, user } = await requireUsuario();
 
   const datos = await cargarProyecto(supabase, id);
   if (!datos) notFound();
   const { proyecto, hitos, novedades, documentos, urls } = datos;
   const completados = hitos.filter((h) => h.completado_at).length;
-  const { equipo } = await cargarContextoProyecto(supabase, proyecto);
+  const [{ equipo }, mensajes] = await Promise.all([
+    cargarContextoProyecto(supabase, proyecto),
+    cargarMensajes(supabase, id, user.id),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
@@ -50,6 +54,10 @@ export default async function DetalleProyectoPage({ params }: { params: Promise<
           </ul>
         </section>
       )}
+
+      <div className="mt-6">
+        <ConversacionProyecto proyectoId={proyecto.id} datos={mensajes} vista="cliente" />
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:col-span-3">

@@ -4,21 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/brand";
 
-const INICIO = {
-  admin: { href: "/admin", label: "Administración" },
-  equipo: { href: "/equipo", label: "Mis proyectos" },
-  cliente: { href: "/portal", label: "Mi portal" },
+// Enlaces por rol; "Mis datos" es común a todos. Un enlace queda activo si la
+// ruta empieza con su href y no corresponde a otro enlace más específico.
+const ENLACES = {
+  admin: [{ href: "/admin", label: "Administración" }],
+  equipo: [
+    { href: "/equipo", label: "Mis proyectos" },
+    { href: "/equipo/tickets", label: "Mis tickets" },
+  ],
+  cliente: [{ href: "/portal", label: "Mi portal" }],
 } as const;
 
-export default function PortalHeader({ rol }: { rol: keyof typeof INICIO }) {
+export default function PortalHeader({ rol }: { rol: keyof typeof ENLACES }) {
   const pathname = usePathname();
-  // Cada rol tiene su propio inicio; "Mis datos" es común a todos.
-  const enMisDatos = pathname.startsWith("/portal/mis-datos");
-  const inicio = INICIO[rol];
-  const links = [
-    { ...inicio, activo: pathname.startsWith(inicio.href) && !enMisDatos },
-    { href: "/portal/mis-datos", label: "Mis datos", activo: enMisDatos },
-  ];
+  const todos = [...ENLACES[rol], { href: "/portal/mis-datos", label: "Mis datos" }];
+  const masEspecifico = todos
+    .filter((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+  const links = todos.map((l) => ({ ...l, activo: l.href === masEspecifico }));
 
   const linkClase = (activo: boolean) =>
     `rounded-lg px-3 py-2 font-medium transition ${

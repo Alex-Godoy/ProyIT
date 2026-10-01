@@ -29,6 +29,7 @@ export const MENSAJES = {
   miembro_es_cliente: "Ese correo tiene acceso como cliente. Quítale ese acceso antes de sumarlo al equipo.",
   miembro_no_guardado: "No se pudo guardar el integrante del equipo.",
   miembro_no_asignado: "No se pudo asignar a esa persona al proyecto.",
+  ticket_no_guardado: "No se pudo actualizar el ticket.",
 } as const;
 
 export type CodigoMensaje = keyof typeof MENSAJES;
@@ -50,6 +51,11 @@ export const MENSAJES_OK = {
   miembro_invitado: "Integrante agregado. Pídele que se registre en el portal con ese correo.",
   miembro_actualizado: "Datos del integrante actualizados.",
   acceso_agregado: "Acceso agregado. Pídele al cliente que se registre en el portal con ese correo.",
+  ticket_creado: "Ticket creado. Te responderemos lo antes posible.",
+  ticket_actualizado: "Ticket actualizado.",
+  ticket_asignado: "Responsable asignado. Ya puede ver y atender el ticket.",
+  ticket_sin_responsable: "El ticket quedó sin responsable.",
+  mensaje_enviado: "Mensaje enviado.",
 } as const;
 
 export type CodigoOk = keyof typeof MENSAJES_OK;

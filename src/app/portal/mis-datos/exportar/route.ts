@@ -12,7 +12,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
-  const [{ data: perfil }, { data: accesos }, { data: solicitudes }] = await Promise.all([
+  const [{ data: perfil }, { data: accesos }, { data: solicitudes }, { data: tickets }, { data: mensajes }] = await Promise.all([
     supabase
       .from("profiles")
       .select("email, full_name, company, role, privacidad_version, privacidad_aceptada_at, created_at, updated_at")
@@ -23,6 +23,16 @@ export async function GET() {
       .select("email, nombre_contacto, cargo, created_at, cliente:clientes(tipo, nombre, rut)")
       .eq("user_id", user.id),
     supabase.from("solicitudes_derechos").select(COLUMNAS_SOLICITUD).eq("user_id", user.id),
+    // Tickets que la persona creó y mensajes que escribió (sin notas internas del equipo).
+    supabase
+      .from("tickets")
+      .select("numero, asunto, descripcion, prioridad, estado, created_at, resuelto_at")
+      .eq("creado_por", user.id),
+    supabase
+      .from("ticket_mensajes")
+      .select("contenido, created_at, ticket:tickets(numero)")
+      .eq("autor_id", user.id)
+      .eq("interno", false),
   ]);
 
   const exportacion = {
@@ -37,6 +47,8 @@ export async function GET() {
     perfil,
     accesos_a_clientes: accesos ?? [],
     solicitudes_de_derechos: solicitudes ?? [],
+    tickets_creados: tickets ?? [],
+    mensajes_en_tickets: mensajes ?? [],
   };
 
   return new NextResponse(JSON.stringify(exportacion, null, 2), {

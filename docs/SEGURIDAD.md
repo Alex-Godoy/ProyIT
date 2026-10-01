@@ -14,6 +14,7 @@ Revisar cada 6 meses o ante cualquier cambio relevante del portal.
 | Cuentas del portal | Usuarios de clientes, equipo ProyIT | Nombre, correo, empresa, fecha de aceptación de la política | Ejecución del contrato | Relación comercial + 2 años |
 | Fichas de clientes | Empresas y personas clientes, sus contactos | Razón social/nombre, RUT, giro, correo, teléfono, dirección, notas internas | Ejecución del contrato | Relación comercial + 2 años |
 | Proyectos y documentos | Clientes | Etapas, hitos, bitácora, archivos | Ejecución del contrato | Relación comercial + garantía |
+| Tickets de soporte | Usuarios de clientes, equipo ProyIT | Asunto, descripción, mensajes, adjuntos, notas internas del equipo | Ejecución del contrato | 2 años desde el cierre |
 | Solicitudes de derechos | Titulares | Tipo, detalle, respuesta | Obligación legal | 2 años desde el cierre |
 | Auditoría | Usuarios | Quién cambió qué tabla/columnas y cuándo (sin valores) | Interés legítimo (seguridad) | 2 años |
 

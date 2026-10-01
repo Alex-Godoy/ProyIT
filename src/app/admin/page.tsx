@@ -4,6 +4,11 @@ import { nombreVisible } from "@/lib/clientes";
 import { etiquetaTipo } from "@/lib/derechos";
 import { COLUMNAS_PROYECTO, formatearFecha, formatearFechaHora, type Proyecto } from "@/lib/proyectos";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
+import { ESTADOS_ABIERTOS, estadoSla, numeroTicket, type Ticket } from "@/lib/tickets";
+
+type TicketAtencion = Pick<Ticket, "id" | "numero" | "asunto" | "responsable_id" | "vence_at" | "primera_respuesta_at" | "estado"> & {
+  cliente: { nombre: string; nombre_fantasia: string | null } | null;
+};
 
 export const metadata = { title: "Resumen · Administración ProyIT" };
 
@@ -51,6 +56,7 @@ export default async function AdminResumenPage() {
     sinActualizarRes,
     recientesRes,
     solicitudesRes,
+    ticketsRes,
   ] = await Promise.all([
     contar("clientes").eq("tipo", "empresa").eq("activo", true),
     contar("clientes").eq("tipo", "persona").eq("activo", true),
@@ -91,6 +97,11 @@ export default async function AdminResumenPage() {
       .in("estado", ["recibida", "en_proceso"])
       .order("plazo_respuesta")
       .limit(4),
+    supabase
+      .from("tickets")
+      .select("id, numero, asunto, responsable_id, vence_at, primera_respuesta_at, estado, cliente:clientes(nombre, nombre_fantasia)")
+      .in("estado", ESTADOS_ABIERTOS)
+      .order("vence_at"),
   ]);
 
   const pendientes = (pendientesRes.data ?? []) as unknown as AccesoPendiente[];
@@ -103,7 +114,11 @@ export default async function AdminResumenPage() {
   const nSinActualizar = sinActualizarRes.count ?? 0;
   const solicitudes = (solicitudesRes.data ?? []) as { id: string; tipo: string; email: string; plazo_respuesta: string }[];
   const nSolicitudes = solicitudesRes.count ?? 0;
-  const nAtencion = nSolicitudes + nPendientes + nVencidos + nSinActualizar;
+  // Tickets que requieren acción: sin responsable o con el plazo de respuesta vencido.
+  const ticketsAbiertos = (ticketsRes.data ?? []) as unknown as TicketAtencion[];
+  const ticketsAtencion = ticketsAbiertos.filter((t) => !t.responsable_id || estadoSla(t).tipo === "vencido");
+  const nTickets = ticketsAtencion.length;
+  const nAtencion = nSolicitudes + nTickets + nPendientes + nVencidos + nSinActualizar;
 
   const pasos = [
     { hecho: (totalClientes.count ?? 0) > 0, titulo: "Crea tu primer cliente", texto: "Una empresa o una persona.", href: "/admin/clientes/nuevo" },
@@ -289,6 +304,24 @@ export default async function AdminResumenPage() {
               </div>
             ) : (
               <div className="mt-3 space-y-3">
+                {nTickets > 0 && (
+                  <GrupoAtencion titulo="Tickets de soporte" total={nTickets} tono="rojo">
+                    {ticketsAtencion.slice(0, 4).map((t) => (
+                      <ItemAtencion
+                        key={t.id}
+                        href={`/admin/tickets/${t.id}`}
+                        principal={`${numeroTicket(t.numero)} ${t.asunto}`}
+                        secundario={[
+                          t.cliente ? nombreVisible(t.cliente) : null,
+                          !t.responsable_id ? "sin asignar" : null,
+                          estadoSla(t).tipo === "vencido" ? "plazo vencido" : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      />
+                    ))}
+                  </GrupoAtencion>
+                )}
                 {nSolicitudes > 0 && (
                   <GrupoAtencion titulo="Solicitudes de derechos (plazo legal)" total={nSolicitudes} tono="rojo">
                     {solicitudes.map((s) => (

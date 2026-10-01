@@ -78,7 +78,8 @@ export default function PrivacidadPage() {
                 empresas y personas con las que trabajamos, y los correos de las personas autorizadas a ver sus proyectos.
               </li>
               <li>
-                <strong>Datos de los proyectos:</strong> etapas, hitos, novedades y documentos que compartimos contigo.
+                <strong>Datos de los proyectos y del soporte:</strong> etapas, hitos, novedades y documentos que compartimos
+                contigo, y los tickets de soporte que levantas (mensajes y archivos adjuntos).
               </li>
               <li>
                 <strong>Datos del equipo de ProyIT:</strong> nombre, correo, teléfono y cargo de los ingenieros, técnicos y
@@ -167,6 +168,7 @@ export default function PrivacidadPage() {
             <ul>
               <li>Datos de cuenta y de clientes: mientras exista la relación comercial y hasta 2 años después de su término.</li>
               <li>Proyectos y documentos: durante la relación comercial y el plazo de garantía del servicio.</li>
+              <li>Tickets de soporte: hasta 2 años después de cerrados.</li>
               <li>Registros de seguridad y auditoría: hasta 2 años.</li>
               <li>
                 Información que debamos mantener por ley (por ejemplo, tributaria): por el plazo que esa ley establezca.

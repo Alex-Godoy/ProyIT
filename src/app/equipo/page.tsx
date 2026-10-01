@@ -4,6 +4,7 @@ import { etiquetaCargo, puede } from "@/lib/permisos";
 import { COLUMNAS_PROYECTO, formatearFecha, formatearFechaHora, type Proyecto } from "@/lib/proyectos";
 import { nombreVisible } from "@/lib/clientes";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
+import { ESTADOS_ABIERTOS, estadoSla, type Ticket } from "@/lib/tickets";
 
 type FilaProyecto = Proyecto & { cliente: { nombre: string; nombre_fantasia: string | null } | null };
 
@@ -11,11 +12,20 @@ export default async function EquipoInicioPage() {
   const { supabase, miembro } = await requireEquipo();
 
   // RLS devuelve solo los proyectos asignados a esta persona.
-  const { data } = await supabase
-    .from("proyectos")
-    .select(`${COLUMNAS_PROYECTO}, cliente:clientes(nombre, nombre_fantasia)`)
-    .order("updated_at", { ascending: false });
+  const [{ data }, { data: ticketsData }] = await Promise.all([
+    supabase
+      .from("proyectos")
+      .select(`${COLUMNAS_PROYECTO}, cliente:clientes(nombre, nombre_fantasia)`)
+      .order("updated_at", { ascending: false }),
+    // Tickets abiertos de los que es responsable (RLS).
+    supabase
+      .from("tickets")
+      .select("vence_at, primera_respuesta_at, estado")
+      .in("estado", ESTADOS_ABIERTOS),
+  ]);
   const proyectos = (data ?? []) as unknown as FilaProyecto[];
+  const tickets = (ticketsData ?? []) as Pick<Ticket, "vence_at" | "primera_respuesta_at" | "estado">[];
+  const ticketsVencidos = tickets.filter((t) => estadoSla(t).tipo === "vencido").length;
   const enCurso = proyectos.filter((p) => p.etapa !== "entregado");
   const entregados = proyectos.filter((p) => p.etapa === "entregado");
 
@@ -35,6 +45,27 @@ export default async function EquipoInicioPage() {
           ? `En tus proyectos puedes ${permisos.join(", ").replace(/, ([^,]*)$/, " y $1")}.`
           : "Aquí ves los proyectos en los que participas."}
       </p>
+
+      {tickets.length > 0 && (
+        <Link
+          href="/equipo/tickets"
+          className={`mt-6 flex items-center justify-between gap-3 rounded-2xl p-4 ring-1 transition hover:shadow-md sm:p-5 ${
+            ticketsVencidos > 0 ? "bg-red-50 ring-red-200" : "bg-white ring-slate-200"
+          }`}
+        >
+          <span>
+            <span className="block font-semibold text-ink">
+              Tienes {tickets.length} {tickets.length === 1 ? "ticket" : "tickets"} de soporte por atender
+            </span>
+            {ticketsVencidos > 0 && (
+              <span className="block text-sm text-red-700">
+                {ticketsVencidos} con el plazo de respuesta vencido
+              </span>
+            )}
+          </span>
+          <span className="text-sm font-semibold text-brand-blue">Ver tickets →</span>
+        </Link>
+      )}
 
       <h2 className="mt-8 text-lg font-semibold text-ink">Proyectos en curso ({enCurso.length})</h2>
       {enCurso.length === 0 ? (

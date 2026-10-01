@@ -105,7 +105,7 @@ export default async function AdminProyectoPage({
                         {m.activo && !m.user_id && " · aún no se registra"}
                       </span>
                     </span>
-                    <form action={quitarMiembroAction.bind(null, proyecto.id, m.id)}>
+                    <form action={quitarMiembroAction.bind(null, proyecto.id, m.id, "proyecto")}>
                       <BotonEnviar variante="peligro" confirmar={`¿Quitar a ${m.nombre} de este proyecto?`}>
                         Quitar
                       </BotonEnviar>

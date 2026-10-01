@@ -3,7 +3,13 @@ import { requireAdmin } from "@/lib/auth";
 import { CARGOS, etiquetaCargo } from "@/lib/permisos";
 import { Avisos } from "@/components/admin/avisos";
 import { BotonEnviar, inputClase, labelClase } from "@/components/admin/ui";
-import { actualizarMiembroAction, invitarMiembroAction } from "../actions";
+import { nombreVisible } from "@/lib/clientes";
+import {
+  actualizarMiembroAction,
+  asignarProyectoAction,
+  invitarMiembroAction,
+  quitarMiembroAction,
+} from "../actions";
 
 export const metadata = { title: "Equipo · Administración ProyIT" };
 
@@ -16,6 +22,13 @@ type Miembro = {
   activo: boolean;
   user_id: string | null;
   proyectos: { proyecto: { id: string; nombre: string } | null }[];
+};
+
+type ProyectoOpcion = {
+  id: string;
+  nombre: string;
+  etapa: string;
+  cliente: { nombre: string; nombre_fantasia: string | null } | null;
 };
 
 const tarjeta = "rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6";
@@ -35,12 +48,19 @@ export default async function AdminEquipoPage({
   const { error, ok } = await searchParams;
   const { supabase } = await requireAdmin();
 
-  const { data } = await supabase
-    .from("equipo")
-    .select("id, email, nombre, cargo, telefono, activo, user_id, proyectos:proyecto_equipo(proyecto:proyectos(id, nombre))")
-    .order("activo", { ascending: false })
-    .order("nombre");
+  const [{ data }, { data: proyectosData }] = await Promise.all([
+    supabase
+      .from("equipo")
+      .select("id, email, nombre, cargo, telefono, activo, user_id, proyectos:proyecto_equipo(proyecto:proyectos(id, nombre))")
+      .order("activo", { ascending: false })
+      .order("nombre"),
+    supabase
+      .from("proyectos")
+      .select("id, nombre, etapa, cliente:clientes(nombre, nombre_fantasia)")
+      .order("nombre"),
+  ]);
   const miembros = (data ?? []) as unknown as Miembro[];
+  const todosLosProyectos = (proyectosData ?? []) as unknown as ProyectoOpcion[];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -114,6 +134,8 @@ export default async function AdminEquipoPage({
           ) : (
             miembros.map((m) => {
               const proyectos = m.proyectos.map((p) => p.proyecto).filter((p) => p !== null);
+              const asignadosIds = new Set(proyectos.map((p) => p.id));
+              const disponibles = todosLosProyectos.filter((p) => !asignadosIds.has(p.id));
               return (
                 <article key={m.id} className={`${tarjeta} ${m.activo ? "" : "opacity-70"}`}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -141,20 +163,71 @@ export default async function AdminEquipoPage({
                     </span>
                   </div>
 
-                  <div className="mt-3 text-sm">
-                    <span className="text-muted">Proyectos: </span>
+                  <div className="mt-4 rounded-xl bg-surface p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                      Proyectos asignados ({proyectos.length})
+                    </p>
                     {proyectos.length === 0 ? (
-                      <span className="text-muted">ninguno asignado</span>
+                      <p className="mt-2 text-sm text-muted">Ninguno todavía. Asígnale uno abajo.</p>
                     ) : (
-                      proyectos.map((p, i) => (
-                        <span key={p.id}>
-                          {i > 0 && ", "}
-                          <Link href={`/admin/proyectos/${p.id}?tab=equipo`} className="text-brand-blue hover:underline">
-                            {p.nombre}
-                          </Link>
-                        </span>
-                      ))
+                      <ul className="mt-2 divide-y divide-slate-200/70">
+                        {proyectos.map((p) => (
+                          <li key={p.id} className="flex items-center justify-between gap-3 py-1.5">
+                            <Link
+                              href={`/admin/proyectos/${p.id}?tab=equipo`}
+                              className="min-w-0 truncate text-sm font-medium text-brand-blue hover:underline"
+                            >
+                              {p.nombre}
+                            </Link>
+                            <form action={quitarMiembroAction.bind(null, p.id, m.id, "equipo")}>
+                              <BotonEnviar variante="peligro" confirmar={`¿Quitar a ${m.nombre} de "${p.nombre}"?`}>
+                                Quitar
+                              </BotonEnviar>
+                            </form>
+                          </li>
+                        ))}
+                      </ul>
                     )}
+
+                    {m.activo &&
+                      (disponibles.length > 0 ? (
+                        <form
+                          action={asignarProyectoAction.bind(null, m.id)}
+                          className="mt-3 flex flex-col gap-2 border-t border-slate-200/70 pt-3 sm:flex-row"
+                        >
+                          <select
+                            name="proyecto_id"
+                            required
+                            defaultValue=""
+                            aria-label={`Proyecto para asignar a ${m.nombre}`}
+                            className={inputClase}
+                          >
+                            <option value="" disabled>
+                              Asignar a un proyecto…
+                            </option>
+                            {disponibles.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.nombre}
+                                {p.cliente ? ` — ${nombreVisible(p.cliente)}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                          <BotonEnviar variante="secundario">Asignar</BotonEnviar>
+                        </form>
+                      ) : (
+                        <p className="mt-3 border-t border-slate-200/70 pt-3 text-xs text-muted">
+                          {todosLosProyectos.length === 0 ? (
+                            <>
+                              Aún no hay proyectos.{" "}
+                              <Link href="/admin/proyectos/nuevo" className="text-brand-blue hover:underline">
+                                Crear uno
+                              </Link>
+                            </>
+                          ) : (
+                            "Ya está asignado a todos los proyectos."
+                          )}
+                        </p>
+                      ))}
                   </div>
 
                   <details className="mt-3">

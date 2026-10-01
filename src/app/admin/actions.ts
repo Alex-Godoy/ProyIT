@@ -17,7 +17,8 @@ function texto(fd: FormData, campo: string) {
 }
 
 function volver(path: string, error?: CodigoMensaje): never {
-  redirect(error ? `${path}?error=${error}` : path);
+  // `path` puede traer ya parámetros (?tab=...): el error se agrega con & en ese caso.
+  redirect(error ? `${path}${path.includes("?") ? "&" : "?"}error=${error}` : path);
 }
 
 function datosProyecto(fd: FormData) {
@@ -302,23 +303,41 @@ export async function actualizarMiembroAction(miembroId: string, fd: FormData) {
   volver("/admin/equipo?ok=miembro_actualizado");
 }
 
-export async function asignarMiembroAction(proyectoId: string, fd: FormData) {
+// La asignación se puede hacer desde el proyecto (pestaña Equipo) o desde la
+// ficha de la persona (sección Equipo); `desde` define a dónde volver.
+type DesdeAsignacion = "proyecto" | "equipo";
+
+function rutaAsignacion(desde: DesdeAsignacion, proyectoId: string) {
+  return desde === "proyecto" ? `/admin/proyectos/${proyectoId}?tab=equipo` : "/admin/equipo";
+}
+
+async function asignar(proyectoId: string | null, equipoId: string | null, desde: DesdeAsignacion) {
   const { supabase } = await requireAdmin();
-  const path = `/admin/proyectos/${proyectoId}?tab=equipo`;
-  const equipoId = texto(fd, "equipo_id");
-  if (!equipoId) volver(path, "miembro_no_asignado");
+  const path = rutaAsignacion(desde, proyectoId ?? "");
+  if (!proyectoId || !equipoId) volver(path, "miembro_no_asignado");
 
   const { error } = await supabase.from("proyecto_equipo").insert({ proyecto_id: proyectoId, equipo_id: equipoId });
   if (error && error.code !== "23505") volver(path, "miembro_no_asignado");
   revalidarEquipo();
   revalidatePath(`/portal/proyectos/${proyectoId}`);
-  volver(`${path}&ok=equipo_asignado`);
+  volver(`${path}${path.includes("?") ? "&" : "?"}ok=equipo_asignado`);
 }
 
-export async function quitarMiembroAction(proyectoId: string, equipoId: string) {
+// Desde el proyecto: se elige a la persona.
+export async function asignarMiembroAction(proyectoId: string, fd: FormData) {
+  await asignar(proyectoId, texto(fd, "equipo_id"), "proyecto");
+}
+
+// Desde la ficha de la persona: se elige el proyecto.
+export async function asignarProyectoAction(equipoId: string, fd: FormData) {
+  await asignar(texto(fd, "proyecto_id"), equipoId, "equipo");
+}
+
+export async function quitarMiembroAction(proyectoId: string, equipoId: string, desde: DesdeAsignacion = "proyecto") {
   const { supabase } = await requireAdmin();
   await supabase.from("proyecto_equipo").delete().eq("proyecto_id", proyectoId).eq("equipo_id", equipoId);
   revalidarEquipo();
   revalidatePath(`/portal/proyectos/${proyectoId}`);
-  volver(`/admin/proyectos/${proyectoId}?tab=equipo&ok=equipo_quitado`);
+  const path = rutaAsignacion(desde, proyectoId);
+  volver(`${path}${path.includes("?") ? "&" : "?"}ok=equipo_quitado`);
 }

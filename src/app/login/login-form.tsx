@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { POLITICA_VERSION } from "@/lib/empresa";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 
-type Modo = "ingreso" | "registro";
+type Modo = "ingreso" | "registro" | "recuperar";
 
+const FALTA_CAPTCHA = "Completa la verificación de seguridad que está sobre el botón para continuar.";
 const MENSAJE_CAPTCHA = "No pudimos verificar que eres una persona. Espera la verificación e inténtalo de nuevo.";
 
 export default function LoginForm() {
@@ -22,6 +23,7 @@ export default function LoginForm() {
   const [nombre, setNombre] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [aceptaPolitica, setAceptaPolitica] = useState(false);
+  const [verPassword, setVerPassword] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const captcha = useRef<CaptchaHandle>(null);
@@ -37,11 +39,29 @@ export default function LoginForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setCargando(true);
     setError(null);
     setAviso(null);
+    // El botón nunca se bloquea esperando el captcha: si falta, se explica qué hacer.
+    if (faltaCaptcha) {
+      setError(FALTA_CAPTCHA);
+      return;
+    }
+    setCargando(true);
 
-    if (modo === "ingreso") {
+    if (modo === "recuperar") {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback?next=/restablecer`,
+        captchaToken: captchaToken ?? undefined,
+      });
+      if (error && /captcha/i.test(error.message)) {
+        setError(MENSAJE_CAPTCHA);
+      } else if (error) {
+        setError("No pudimos enviar el correo. Inténtalo de nuevo en unos minutos.");
+      } else {
+        // Mismo mensaje exista o no la cuenta, para no revelar quién está registrado.
+        setAviso("Si ese correo tiene una cuenta, te enviamos un enlace para crear una nueva contraseña. Revisa tu bandeja y el spam.");
+      }
+    } else if (modo === "ingreso") {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -100,20 +120,31 @@ export default function LoginForm() {
     if (error) setError("El ingreso con Google aún no está habilitado.");
   }
 
+  function cambiarModo(nuevo: Modo) {
+    setModo(nuevo);
+    setError(null);
+    setAviso(null);
+  }
+
+  const label = "mb-1.5 block text-sm font-medium text-ink";
   const input =
     "w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-ink outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
 
   return (
-    <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-8">
       <h2 className="text-2xl font-bold text-navy">
-        {modo === "ingreso" ? "Ingresa a tu portal" : "Crea tu cuenta"}
+        {modo === "ingreso" ? "Ingresa a tu portal" : modo === "registro" ? "Crea tu cuenta" : "Recupera tu contraseña"}
       </h2>
       <p className="mt-1 text-sm text-muted">
         {modo === "ingreso"
           ? "Bienvenido de vuelta."
-          : "Usa el correo con el que trabajas con ProyIT."}
+          : modo === "registro"
+            ? "Usa el correo con el que trabajas con ProyIT."
+            : "Escribe tu correo y te enviaremos un enlace para crear una nueva."}
       </p>
 
+      {modo !== "recuperar" && (
+        <>
       <button
         type="button"
         onClick={conGoogle}
@@ -131,19 +162,64 @@ export default function LoginForm() {
       <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-muted">
         <span className="h-px flex-1 bg-slate-200" /> o con tu correo <span className="h-px flex-1 bg-slate-200" />
       </div>
+        </>
+      )}
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className={modo === "recuperar" ? "mt-6 space-y-4" : "space-y-4"}>
         {modo === "registro" && (
           <>
-            <input className={input} placeholder="Nombre y apellido" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-            <input className={input} placeholder="Empresa" value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
+            <div>
+              <label htmlFor="nombre" className={label}>Nombre y apellido</label>
+              <input id="nombre" name="nombre" className={input} autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+            </div>
+            <div>
+              <label htmlFor="empresa" className={label}>Empresa <span className="font-normal text-muted">(opcional)</span></label>
+              <input id="empresa" name="empresa" className={input} autoComplete="organization" value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
+            </div>
           </>
         )}
-        <input className={input} type="email" placeholder="correo@empresa.cl" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        <input className={input} type="password" placeholder="Contraseña" autoComplete={modo === "ingreso" ? "current-password" : "new-password"} minLength={modo === "registro" ? 8 : undefined} value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <div>
+          <label htmlFor="email" className={label}>Correo</label>
+          <input id="email" name="email" className={input} type="email" placeholder="correo@empresa.cl" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+        {modo !== "recuperar" && (
+          <div>
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <label htmlFor="password" className="block text-sm font-medium text-ink">Contraseña</label>
+              {modo === "ingreso" && (
+                <button type="button" className="text-sm font-semibold text-navy hover:underline" onClick={() => cambiarModo("recuperar")}>
+                  ¿Olvidaste tu contraseña?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                id="password"
+                name="password"
+                className={`${input} pr-24`}
+                type={verPassword ? "text" : "password"}
+                autoComplete={modo === "ingreso" ? "current-password" : "new-password"}
+                minLength={modo === "registro" ? 8 : undefined}
+                aria-describedby={modo === "registro" ? "password-ayuda" : undefined}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                aria-pressed={verPassword}
+                aria-label={verPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-sm font-semibold text-navy hover:underline"
+                onClick={() => setVerPassword(!verPassword)}
+              >
+                {verPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
+          </div>
+        )}
         {modo === "registro" && (
           <>
-            <p className="-mt-2 text-xs text-muted">Mínimo 8 caracteres.</p>
+            <p id="password-ayuda" className="-mt-2 text-xs text-muted">Mínimo 8 caracteres.</p>
             <label className="flex items-start gap-3 text-sm text-ink">
               <input
                 type="checkbox"
@@ -163,23 +239,23 @@ export default function LoginForm() {
           </>
         )}
 
-        {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
-        {aviso && <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{aviso}</p>}
-
         <Captcha ref={captcha} onToken={setCaptchaToken} />
+
+        {error && <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+        {aviso && <p role="status" className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{aviso}</p>}
 
         <button
           type="submit"
-          disabled={cargando || faltaCaptcha}
-          className="w-full rounded-lg bg-brand-orange px-4 py-3 font-semibold text-white hover:bg-brand-orange-dark disabled:opacity-60"
+          disabled={cargando}
+          className="w-full rounded-lg bg-brand-orange-text px-4 py-3 font-semibold text-white hover:bg-brand-orange-text-dark disabled:opacity-60"
         >
           {cargando
             ? "Un momento…"
-            : faltaCaptcha
-              ? "Verificando que eres una persona…"
-              : modo === "ingreso"
-                ? "Ingresar"
-                : "Crear cuenta"}
+            : modo === "ingreso"
+              ? "Ingresar"
+              : modo === "registro"
+                ? "Crear cuenta"
+                : "Enviar enlace"}
         </button>
       </form>
 
@@ -192,15 +268,11 @@ export default function LoginForm() {
       </p>
 
       <p className="mt-4 text-center text-sm text-muted">
-        {modo === "ingreso" ? "¿Aún no tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
+        {modo === "ingreso" ? "¿Aún no tienes cuenta?" : modo === "registro" ? "¿Ya tienes cuenta?" : "¿Recordaste tu contraseña?"}{" "}
         <button
           type="button"
-          className="font-semibold text-navy hover:underline"
-          onClick={() => {
-            setModo(modo === "ingreso" ? "registro" : "ingreso");
-            setError(null);
-            setAviso(null);
-          }}
+          className="-my-2 py-2 font-semibold text-navy hover:underline"
+          onClick={() => cambiarModo(modo === "ingreso" ? "registro" : "ingreso")}
         >
           {modo === "ingreso" ? "Créala aquí" : "Ingresa aquí"}
         </button>

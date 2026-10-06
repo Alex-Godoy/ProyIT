@@ -6,6 +6,9 @@
   --color-brand-blue: #2f95d3;
   --color-brand-orange: #ff7a1a;
   --color-brand-orange-dark: #d95f00;
+  /* Naranjo para fondos con texto blanco: 5,5:1 de contraste (el de marca da 2,6:1). */
+  --color-brand-orange-text: #b34700;
+  --color-brand-orange-text-dark: #8f3900;
   --color-ink: #0f1c2e;
   --color-muted: #5b6b80;
   --color-surface: #f4f7fb;

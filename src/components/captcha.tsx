@@ -51,7 +51,9 @@ const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken }, r
         sitekey: TURNSTILE_SITE_KEY,
         language: "es",
         theme: "light",
-        size: "flexible",
+        // "flexible" exige 300 px de ancho; en pantallas angostas se usa el compacto
+        // para que el formulario no se desborde.
+        size: contenedor.current.clientWidth < 300 ? "compact" : "flexible",
         callback: (token: string) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(null),
         "error-callback": () => onTokenRef.current(null),

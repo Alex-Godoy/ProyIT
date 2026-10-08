@@ -51,12 +51,16 @@ type NuevaSolicitud = {
   origen: string | null;
 };
 
+function destinatariosAviso() {
+  return (process.env.AVISOS_DIAGNOSTICO_PARA?.split(",") ?? AVISOS_DIAGNOSTICO_PARA)
+    .map((c) => c.trim())
+    .filter(Boolean);
+}
+
 // Aviso interno al equipo comercial. Todo lo que escribió el visitante se
 // escapa antes de ir al HTML; "Responder" le contesta directo a la persona.
 async function avisarNuevaSolicitud(s: NuevaSolicitud, urlAdmin: string) {
-  const para = (process.env.AVISOS_DIAGNOSTICO_PARA?.split(",") ?? AVISOS_DIAGNOSTICO_PARA)
-    .map((c) => c.trim())
-    .filter(Boolean);
+  const para = destinatariosAviso();
   if (para.length === 0) return;
 
   const horario = HORARIOS.find((h) => h.valor === s.horario)?.etiqueta ?? null;
@@ -101,6 +105,70 @@ async function avisarNuevaSolicitud(s: NuevaSolicitud, urlAdmin: string) {
     texto,
     responderA: s.email,
     idempotencia: `diagnostico-${s.id}`,
+  });
+}
+
+// Confirmación al visitante. Cualquiera puede escribir un correo ajeno en el
+// formulario, así que este mensaje no repite nada de texto libre (ni nombre
+// ni mensaje): solo el tema y el horario, que salen de listas fijas. Así no
+// sirve para mandarle contenido arbitrario a un tercero.
+async function confirmarAlVisitante(s: NuevaSolicitud) {
+  const responderA = destinatariosAviso()[0];
+  const horario = HORARIOS.find((h) => h.valor === s.horario)?.etiqueta ?? null;
+  const detalles: [string, string][] = [];
+  if (s.interes) detalles.push(["Tema", s.interes]);
+  if (horario && s.horario !== "indistinto") detalles.push(["Prefieres conversar", horario]);
+
+  const logo = `${PORTAL_URL}/brand/proyit-logo-blanco.png`;
+  const privacidad = `${PORTAL_URL}/privacidad`;
+
+  const html = `<div style="background:#f4f7fb;padding:24px 12px;font-family:Arial,Helvetica,sans-serif;color:#0f1c2e">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
+    <div style="background:#061e4a;padding:20px 28px"><img src="${escaparHtml(logo)}" alt="ProyIT" height="28" style="display:block;height:28px;border:0"></div>
+    <div style="padding:28px">
+      <h1 style="margin:0 0 12px;font-size:22px;color:#0b1f45">Recibimos tu solicitud</h1>
+      <p style="margin:0 0 12px;font-size:15px;line-height:1.6">Hola, gracias por escribirnos.</p>
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.</p>
+      ${
+        detalles.length
+          ? `<table style="border-collapse:collapse;font-size:14px;margin:0 0 16px">${detalles
+              .map(
+                ([k, v]) =>
+                  `<tr><td style="padding:4px 12px 4px 0;color:#5b6b80">${k}</td><td style="padding:4px 0;font-weight:bold">${escaparHtml(v)}</td></tr>`,
+              )
+              .join("")}</table>`
+          : ""
+      }
+      <p style="margin:0;font-size:15px;line-height:1.6">Si quieres contarnos algo más, responde este correo.</p>
+    </div>
+    <div style="padding:16px 28px;border-top:1px solid #e2e8f0;font-size:12px;line-height:1.5;color:#5b6b80">
+      Si no hiciste esta solicitud, puedes ignorar este mensaje.<br>
+      ProyIT · Inversiones Tesoros Chile SpA · <a href="${escaparHtml(privacidad)}" style="color:#5b6b80">Política de privacidad</a>
+    </div>
+  </div>
+</div>`;
+
+  const texto = [
+    "Recibimos tu solicitud",
+    "",
+    "Hola, gracias por escribirnos.",
+    "",
+    "Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
+    ...(detalles.length ? ["", ...detalles.map(([k, v]) => `${k}: ${v}`)] : []),
+    "",
+    "Si quieres contarnos algo más, responde este correo.",
+    "",
+    "Si no hiciste esta solicitud, puedes ignorar este mensaje.",
+    `ProyIT · Inversiones Tesoros Chile SpA · Política de privacidad: ${privacidad}`,
+  ].join("\n");
+
+  await enviarCorreo({
+    para: [s.email],
+    asunto: "Recibimos tu solicitud · ProyIT",
+    html,
+    texto,
+    responderA,
+    idempotencia: `diagnostico-confirmacion-${s.id}`,
   });
 }
 
@@ -149,7 +217,13 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
 
   // El correo sale después de responder: el visitante no espera al proveedor
   // y, si el envío falla, su solicitud igual queda guardada.
-  after(() => avisarNuevaSolicitud(solicitud, `${PORTAL_URL}/admin/diagnosticos`));
+  // Cada envío es independiente: si uno falla, el otro sale igual.
+  after(() =>
+    Promise.allSettled([
+      avisarNuevaSolicitud(solicitud, `${PORTAL_URL}/admin/diagnosticos`),
+      confirmarAlVisitante(solicitud),
+    ]),
+  );
 
   return { ok: true };
 }

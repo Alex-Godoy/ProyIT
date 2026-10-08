@@ -12,6 +12,10 @@ export const DIAGNOSTICO = {
 // (ej. "56912345678"). Vacío = el botón "Escribir por WhatsApp" no se muestra.
 export const WHATSAPP_NUMERO = "";
 
+// Correo público de contacto: se ofrece cuando el formulario no se puede
+// enviar (por ejemplo, si falla la verificación de seguridad).
+export const CONTACTO_EMAIL = "contacto@proyit.tech";
+
 // Quién recibe el aviso por correo de cada solicitud de diagnóstico. Se puede
 // reemplazar sin tocar el código con la variable AVISOS_DIAGNOSTICO_PARA
 // (varios correos separados por coma).

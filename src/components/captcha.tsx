@@ -25,14 +25,23 @@ const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render
 
 export type CaptchaHandle = { reset: () => void };
 
-type Props = { onToken: (token: string | null) => void };
+// Si Cloudflare no logra verificar a la persona (VPN, bloqueadores, navegador
+// antiguo) o su script no carga, se avisa con onError para ofrecer otra salida.
+const ESPERA_CARGA_MS = 15_000;
 
-const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken }, ref) {
+type Props = {
+  onToken: (token: string | null) => void;
+  onError?: () => void;
+};
+
+const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken, onError }, ref) {
   const contenedor = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
-  // Guarda el callback más reciente sin volver a montar el widget.
+  // Guarda los callbacks más recientes sin volver a montar el widget.
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
+  const onErrorRef = useRef(onError);
+  onErrorRef.current = onError;
 
   useImperativeHandle(ref, () => ({
     // Cada token sirve una sola vez: se renueva después de cada intento.
@@ -56,9 +65,18 @@ const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken }, r
         size: contenedor.current.clientWidth < 300 ? "compact" : "flexible",
         callback: (token: string) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(null),
-        "error-callback": () => onTokenRef.current(null),
+        "error-callback": () => {
+          onTokenRef.current(null);
+          onErrorRef.current?.();
+        },
+        "unsupported-callback": () => onErrorRef.current?.(),
       });
     }
+
+    // El script no cargó a tiempo (bloqueado o sin conexión con Cloudflare).
+    const espera = window.setTimeout(() => {
+      if (!window.turnstile) onErrorRef.current?.();
+    }, ESPERA_CARGA_MS);
 
     if (window.turnstile) {
       montar();
@@ -70,11 +88,13 @@ const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken }, r
         script.src = SCRIPT_SRC;
         script.async = true;
         script.defer = true;
+        script.onerror = () => onErrorRef.current?.();
         document.head.appendChild(script);
       }
     }
 
     return () => {
+      window.clearTimeout(espera);
       if (widgetId.current && window.turnstile) window.turnstile.remove(widgetId.current);
       widgetId.current = null;
     };

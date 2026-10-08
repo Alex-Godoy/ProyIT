@@ -5,7 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 import { solicitarDiagnosticoAction, type EstadoEnvio } from "@/app/diagnostico-acciones";
-import { HORARIOS, INTERESES } from "@/lib/sitio";
+import { CONTACTO_EMAIL, HORARIOS, INTERESES, WHATSAPP_NUMERO, enlaceWhatsApp } from "@/lib/sitio";
 
 type Modo = "diagnostico" | "conversacion";
 type Apertura = { modo: Modo; origen: string; interes?: string };
@@ -89,6 +89,10 @@ export default function AgendarDialogo() {
   const captcha = useRef<CaptchaHandle>(null);
   const [apertura, setApertura] = useState<Apertura | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaFallo, setCaptchaFallo] = useState(false);
+  // Cambia con "Reintentar" para montar el captcha desde cero (sirve también
+  // cuando lo que falló fue la carga del script de Cloudflare).
+  const [intentoCaptcha, setIntentoCaptcha] = useState(0);
   // Cambia en cada apertura para volver a montar el formulario limpio.
   const [vez, setVez] = useState(0);
   const [estado, enviar] = useActionState<EstadoEnvio, FormData>(solicitarDiagnosticoAction, null);
@@ -99,6 +103,9 @@ export default function AgendarDialogo() {
     function abrir(detalle: Apertura) {
       setApertura(detalle);
       setVez((v) => v + 1);
+      // Cada apertura pide una verificación nueva (los tokens son de un solo uso).
+      setCaptchaToken(null);
+      setCaptchaFallo(false);
       dialogo.current?.showModal();
       document.documentElement.style.overflow = "hidden";
     }
@@ -124,6 +131,39 @@ export default function AgendarDialogo() {
     // Solo reacciona a respuestas nuevas, no a cambios de apertura.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [estado]);
+
+  function alToken(token: string | null) {
+    setCaptchaToken(token);
+    if (token) setCaptchaFallo(false);
+  }
+
+  function reintentarCaptcha() {
+    setCaptchaFallo(false);
+    setCaptchaToken(null);
+    setIntentoCaptcha((n) => n + 1);
+  }
+
+  // Si la verificación falla, lo escrito no se pierde: va armado en el correo.
+  function mensajeAlternativo() {
+    const fd = formulario.current ? new FormData(formulario.current) : null;
+    const campo = (n: string) => {
+      const v = fd?.get(n);
+      return typeof v === "string" ? v.trim() : "";
+    };
+    const datos = [
+      ["Nombre", campo("nombre")],
+      ["Empresa", campo("empresa")],
+      ["WhatsApp / teléfono", campo("telefono")],
+      ["Me interesa", campo("interes")],
+    ]
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}: ${v}`);
+    return [
+      "Hola ProyIT, quiero agendar un diagnóstico.",
+      ...(datos.length ? ["", ...datos] : []),
+      ...(campo("mensaje") ? ["", campo("mensaje")] : []),
+    ].join("\n");
+  }
 
   function cerrar() {
     dialogo.current?.close();
@@ -279,7 +319,48 @@ export default function AgendarDialogo() {
                   </span>
                 </label>
 
-                <Captcha ref={captcha} onToken={setCaptchaToken} />
+                <Captcha key={intentoCaptcha} ref={captcha} onToken={alToken} onError={() => setCaptchaFallo(true)} />
+
+                {captchaFallo && !captchaToken && (
+                  <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <p className="font-semibold">No pudimos completar la verificación de seguridad.</p>
+                    <p className="mt-1">
+                      Suele pasar con VPN, bloqueadores de anuncios o navegadores antiguos. Puedes reintentar o
+                      escribirnos directo: tus datos van incluidos en el mensaje.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={reintentarCaptcha}
+                        className="rounded-full border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 transition hover:bg-amber-100"
+                      >
+                        Reintentar
+                      </button>
+                      <a
+                        href={`mailto:${CONTACTO_EMAIL}`}
+                        onClick={(e) => {
+                          e.currentTarget.href = `mailto:${CONTACTO_EMAIL}?subject=${encodeURIComponent("Quiero agendar un diagnóstico")}&body=${encodeURIComponent(mensajeAlternativo())}`;
+                        }}
+                        className="rounded-full bg-noche px-4 py-2 font-semibold text-white transition hover:bg-navy"
+                      >
+                        Escribir a {CONTACTO_EMAIL}
+                      </a>
+                      {WHATSAPP_NUMERO && (
+                        <a
+                          href={enlaceWhatsApp("Hola ProyIT, quiero agendar un diagnóstico.")}
+                          onClick={(e) => {
+                            e.currentTarget.href = enlaceWhatsApp(mensajeAlternativo());
+                          }}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 transition hover:bg-amber-100"
+                        >
+                          Escribir por WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {errorVisible && (
                   <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -287,7 +368,7 @@ export default function AgendarDialogo() {
                   </p>
                 )}
 
-                {TURNSTILE_SITE_KEY && !captchaToken && (
+                {TURNSTILE_SITE_KEY && !captchaToken && !captchaFallo && (
                   <p className="text-xs text-muted">Completa la verificación de seguridad para enviar.</p>
                 )}
 

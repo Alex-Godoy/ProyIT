@@ -12,6 +12,15 @@ export const DIAGNOSTICO = {
 // (ej. "56912345678"). Vacío = el botón "Escribir por WhatsApp" no se muestra.
 export const WHATSAPP_NUMERO = "";
 
+// Quién recibe el aviso por correo de cada solicitud de diagnóstico. Se puede
+// reemplazar sin tocar el código con la variable AVISOS_DIAGNOSTICO_PARA
+// (varios correos separados por coma).
+export const AVISOS_DIAGNOSTICO_PARA = ["alex.godoy@proyit.tech"];
+
+// Dirección pública del portal para los enlaces de los correos. Es fija (no se
+// toma de la petición) para que nadie pueda colar un enlace a otro dominio.
+export const PORTAL_URL = process.env.PORTAL_URL || "https://portal-proyit.vercel.app";
+
 export function enlaceWhatsApp(mensaje: string) {
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
 }

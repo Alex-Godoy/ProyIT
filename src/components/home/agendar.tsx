@@ -70,12 +70,14 @@ const campo =
   "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none transition placeholder:text-slate-400 focus:border-acento focus:ring-2 focus:ring-acento/20";
 const etiqueta = "mb-1.5 block text-sm font-medium text-titulo";
 
-function BotonEnviar({ bloqueado }: { bloqueado: boolean }) {
+// Nunca se bloquea esperando el captcha: un botón deshabilitado hace que el
+// Enter no haga nada y sin explicación. Si falta, el formulario lo avisa.
+function BotonEnviar() {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending || bloqueado}
+      disabled={pending}
       className="inline-flex w-full items-center justify-center rounded-full bg-brand-orange px-6 py-3 text-sm font-semibold text-titulo transition hover:bg-[#ff8c3a] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
     >
       {pending ? "Enviando…" : "Enviar solicitud"}
@@ -87,9 +89,12 @@ export default function AgendarDialogo() {
   const dialogo = useRef<HTMLDialogElement>(null);
   const formulario = useRef<HTMLFormElement>(null);
   const captcha = useRef<CaptchaHandle>(null);
+  const zonaCaptcha = useRef<HTMLDivElement>(null);
   const [apertura, setApertura] = useState<Apertura | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaFallo, setCaptchaFallo] = useState(false);
+  // La persona intentó enviar (botón o Enter) sin completar la verificación.
+  const [pideCaptcha, setPideCaptcha] = useState(false);
   // Cambia con "Reintentar" para montar el captcha desde cero (sirve también
   // cuando lo que falló fue la carga del script de Cloudflare).
   const [intentoCaptcha, setIntentoCaptcha] = useState(0);
@@ -106,6 +111,7 @@ export default function AgendarDialogo() {
       // Cada apertura pide una verificación nueva (los tokens son de un solo uso).
       setCaptchaToken(null);
       setCaptchaFallo(false);
+      setPideCaptcha(false);
       dialogo.current?.showModal();
       document.documentElement.style.overflow = "hidden";
     }
@@ -134,7 +140,10 @@ export default function AgendarDialogo() {
 
   function alToken(token: string | null) {
     setCaptchaToken(token);
-    if (token) setCaptchaFallo(false);
+    if (token) {
+      setCaptchaFallo(false);
+      setPideCaptcha(false);
+    }
   }
 
   function reintentarCaptcha() {
@@ -236,7 +245,18 @@ export default function AgendarDialogo() {
               <p className="mt-2 text-sm text-muted">
                 Déjanos tus datos y te contactamos para coordinar. Toma menos de un minuto.
               </p>
-              <form ref={formulario} action={enviar} className="mt-6 space-y-4">
+              <form
+                ref={formulario}
+                action={enviar}
+                onSubmit={(e) => {
+                  if (TURNSTILE_SITE_KEY && !captchaToken) {
+                    e.preventDefault();
+                    setPideCaptcha(true);
+                    zonaCaptcha.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+                  }
+                }}
+                className="mt-6 space-y-4"
+              >
                 <input type="hidden" name="origen" value={apertura.origen} />
                 <input type="hidden" name="captcha" value={captchaToken ?? ""} />
                 {/* Campo trampa para bots: oculto a personas y lectores de pantalla. */}
@@ -319,7 +339,9 @@ export default function AgendarDialogo() {
                   </span>
                 </label>
 
-                <Captcha key={intentoCaptcha} ref={captcha} onToken={alToken} onError={() => setCaptchaFallo(true)} />
+                <div ref={zonaCaptcha}>
+                  <Captcha key={intentoCaptcha} ref={captcha} onToken={alToken} onError={() => setCaptchaFallo(true)} />
+                </div>
 
                 {captchaFallo && !captchaToken && (
                   <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -369,7 +391,13 @@ export default function AgendarDialogo() {
                 )}
 
                 {TURNSTILE_SITE_KEY && !captchaToken && !captchaFallo && (
-                  <p className="text-xs text-muted">Completa la verificación de seguridad para enviar.</p>
+                  pideCaptcha ? (
+                    <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                      Antes de enviar, marca la casilla de verificación de seguridad de arriba.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted">Completa la verificación de seguridad para enviar.</p>
+                  )
                 )}
 
                 <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
@@ -380,7 +408,7 @@ export default function AgendarDialogo() {
                   >
                     Cancelar
                   </button>
-                  <BotonEnviar bloqueado={Boolean(TURNSTILE_SITE_KEY) && !captchaToken} />
+                  <BotonEnviar />
                 </div>
               </form>
             </>

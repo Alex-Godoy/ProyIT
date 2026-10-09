@@ -342,20 +342,29 @@ export default function SoportePage() {
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted">Ejemplo de presupuesto</p>
               <dl className="mt-4 space-y-3">
                 <div className="flex justify-between gap-4 text-[17px]">
+                  <dt>Diagnóstico en laboratorio</dt>
+                  <dd className="font-bold">$19.990</dd>
+                </div>
+                <div className="flex justify-between gap-4 text-[17px]">
                   <dt>Mantención térmica</dt>
                   <dd className="font-bold">$34.990</dd>
                 </div>
+                <div className="flex justify-between gap-4 text-[15px] text-muted">
+                  <dt>Sin descuento pagarías</dt>
+                  <dd className="line-through">$54.980</dd>
+                </div>
                 <div className="flex justify-between gap-4 text-[17px] text-acento">
-                  <dt>Diagnóstico ya pagado</dt>
+                  <dt>Diagnóstico descontado</dt>
                   <dd className="font-bold">−$19.990</dd>
                 </div>
                 <div className="flex items-baseline justify-between gap-4 border-t border-[#d5dfee] pt-3">
-                  <dt className="text-[17px] font-bold">Pagas al retirar</dt>
-                  <dd className="font-display text-3xl font-extrabold tracking-tight text-titulo">$15.000</dd>
+                  <dt className="text-[17px] font-bold">Total que pagas</dt>
+                  <dd className="font-display text-3xl font-extrabold tracking-tight text-titulo">$34.990</dd>
                 </div>
               </dl>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                El diagnóstico no es un costo extra: es un abono a tu reparación.
+                $19.990 al dejar el equipo y $15.000 al retirarlo. El diagnóstico no es un costo extra: es un abono a tu
+                reparación.
               </p>
             </div>
           </div>

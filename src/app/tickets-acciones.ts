@@ -2,8 +2,19 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { requireAdmin, requireUsuario } from "@/lib/auth";
-import { BUCKET_TICKETS, ESTADOS_TICKET, MAX_ADJUNTOS, PRIORIDADES } from "@/lib/tickets";
+import { enviarCorreo, escaparHtml } from "@/lib/correo";
+import { AVISOS_SOPORTE_PARA, PORTAL_URL, destinatarios } from "@/lib/sitio";
+import {
+  BUCKET_TICKETS,
+  ESTADOS_TICKET,
+  MAX_ADJUNTOS,
+  PRIORIDADES,
+  formatearPlazo,
+  numeroTicket,
+  prioridadInfo,
+} from "@/lib/tickets";
 import type { CodigoMensaje, CodigoOk } from "@/lib/mensajes";
 
 // Acciones del módulo de tickets. Quién puede hacer qué lo decide RLS
@@ -39,8 +50,77 @@ function volver(b: string, ticketId: string, r: { ok: CodigoOk } | { error: Codi
 // Crear (cliente; el super usuario también puede registrar uno a nombre de un cliente)
 // ---------------------------------------------------------------------------
 
+type TicketNuevo = {
+  id: string;
+  numero: number;
+  vence_at: string;
+  asunto: string;
+  descripcion: string;
+  prioridad: string;
+  cliente: string;
+  proyecto: string | null;
+  autor: string;
+  autorEmail: string | null;
+};
+
+// Aviso al equipo cuando un cliente abre un ticket: sin esto, el ticket
+// esperaría hasta que alguien entrara al panel. El texto del cliente se
+// escapa antes de ir al HTML; "Responder" le escribe a quien lo abrió.
+async function avisarTicketNuevo(t: TicketNuevo) {
+  const para = destinatarios(AVISOS_SOPORTE_PARA, process.env.AVISOS_SOPORTE_PARA);
+  if (para.length === 0) return;
+
+  const prioridad = prioridadInfo(t.prioridad);
+  const urgente = t.prioridad === "urgente" || t.prioridad === "alta";
+  const plazo = formatearPlazo(t.vence_at);
+  const url = `${PORTAL_URL}/admin/tickets/${t.id}`;
+  const filas: [string, string][] = [
+    ["Cliente", t.cliente],
+    ["Abierto por", t.autorEmail ? `${t.autor} (${t.autorEmail})` : t.autor],
+    ["Prioridad", prioridad.etiqueta],
+    ["Responder antes de", plazo],
+    ["Proyecto", t.proyecto ?? "Soporte general"],
+  ];
+
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#0f1c2e;max-width:560px">
+  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:${urgente ? "#b34700" : "#1f6aa8"}">${urgente ? `Ticket ${escaparHtml(prioridad.etiqueta.toLowerCase())} · responder ${escaparHtml(plazo)}` : "Nuevo ticket de soporte"}</p>
+  <h1 style="margin:0 0 16px;font-size:20px">${numeroTicket(t.numero)} · ${escaparHtml(t.asunto)}</h1>
+  <table style="border-collapse:collapse;width:100%;font-size:14px">${filas
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:6px 12px 6px 0;color:#5b6b80;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 0">${escaparHtml(v)}</td></tr>`,
+    )
+    .join("")}</table>
+  <p style="margin:16px 0 4px;color:#5b6b80;font-size:13px">Qué está pasando</p>
+  <p style="margin:0;padding:12px;background:#f4f7fb;border-radius:8px;font-size:14px;white-space:pre-line">${escaparHtml(t.descripcion)}</p>
+  <p style="margin:24px 0"><a href="${escaparHtml(url)}" style="display:inline-block;background:#061e4a;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:bold">Abrir el ticket</a></p>
+  <p style="margin:0;color:#5b6b80;font-size:12px">Responde desde el portal para que quede registrado en el ticket.</p>
+</div>`;
+
+  const texto = [
+    urgente ? `Ticket ${prioridad.etiqueta.toLowerCase()} · responder ${plazo}` : "Nuevo ticket de soporte",
+    "",
+    `${numeroTicket(t.numero)} · ${t.asunto}`,
+    ...filas.map(([k, v]) => `${k}: ${v}`),
+    "",
+    "Qué está pasando:",
+    t.descripcion,
+    "",
+    `Abrir el ticket: ${url}`,
+  ].join("\n");
+
+  await enviarCorreo({
+    para,
+    asunto: `${urgente ? `${prioridad.etiqueta.toUpperCase()} · ` : ""}Ticket ${numeroTicket(t.numero)}: ${t.asunto} (${t.cliente})`,
+    html,
+    texto,
+    responderA: t.autorEmail ?? undefined,
+    idempotencia: `ticket-${t.id}`,
+  });
+}
+
 export async function crearTicketAction(fd: FormData): Promise<{ id: string } | { error: string }> {
-  const { supabase, user } = await requireUsuario();
+  const { supabase, user, perfil } = await requireUsuario();
   const asunto = texto(fd, "asunto", 200);
   const descripcion = texto(fd, "descripcion", 8000);
   const clienteId = texto(fd, "cliente_id", 40);
@@ -62,11 +142,36 @@ export async function crearTicketAction(fd: FormData): Promise<{ id: string } | 
       descripcion,
       prioridad,
     })
-    .select("id")
+    .select("id, numero, vence_at")
     .single();
   if (error || !data) return { error: "No pudimos crear el ticket. Inténtalo de nuevo." };
 
   refrescar(data.id);
+
+  // Solo avisa los tickets que abre un cliente (los que registra el equipo ya
+  // los conoce quien los creó). Sale después de responder: no lo hace esperar.
+  if (perfil?.role === "cliente") {
+    const [{ data: cliente }, { data: proyecto }] = await Promise.all([
+      supabase.from("clientes").select("nombre, nombre_fantasia").eq("id", clienteId).maybeSingle(),
+      proyectoId
+        ? supabase.from("proyectos").select("nombre").eq("id", proyectoId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const aviso: TicketNuevo = {
+      id: data.id,
+      numero: data.numero,
+      vence_at: data.vence_at,
+      asunto,
+      descripcion,
+      prioridad,
+      cliente: cliente?.nombre_fantasia ?? cliente?.nombre ?? "Cliente",
+      proyecto: proyecto?.nombre ?? null,
+      autor: perfil.full_name ?? user.email ?? "Cliente",
+      autorEmail: user.email ?? null,
+    };
+    after(() => avisarTicketNuevo(aviso));
+  }
+
   return { id: data.id };
 }
 

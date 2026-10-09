@@ -140,7 +140,9 @@ export default function LoginForm() {
       </h2>
       <p className="mt-1 text-sm text-muted">
         {modo === "ingreso"
-          ? "Bienvenido de vuelta."
+          ? siguiente.startsWith("/portal/tickets/nuevo")
+            ? "Ingresa y te llevamos directo a pedir soporte."
+            : "Bienvenido de vuelta."
           : modo === "registro"
             ? "Usa el correo con el que trabajas con ProyIT."
             : "Escribe tu correo y te enviaremos un enlace para crear una nueva."}

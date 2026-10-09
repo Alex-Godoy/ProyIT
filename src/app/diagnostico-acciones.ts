@@ -13,6 +13,7 @@ import {
   INTERESES,
   INTERES_URGENCIA,
   PORTAL_URL,
+  destinatarios,
   esInteresPlan,
 } from "@/lib/sitio";
 
@@ -60,9 +61,7 @@ type NuevaSolicitud = {
 };
 
 function destinatariosAviso() {
-  return (process.env.AVISOS_DIAGNOSTICO_PARA?.split(",") ?? AVISOS_DIAGNOSTICO_PARA)
-    .map((c) => c.trim())
-    .filter(Boolean);
+  return destinatarios(AVISOS_DIAGNOSTICO_PARA, process.env.AVISOS_DIAGNOSTICO_PARA);
 }
 
 // Las urgencias y los planes de soporte llegan por el mismo formulario; el

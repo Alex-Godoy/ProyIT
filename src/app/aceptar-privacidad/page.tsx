@@ -2,15 +2,21 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUsuario } from "@/lib/auth";
 import { POLITICA_VERSION } from "@/lib/empresa";
+import { destinoSeguro } from "@/lib/destino";
 import { Logo } from "@/components/brand";
 import { BotonEnviar } from "@/components/admin/ui";
 import { aceptarPoliticaAction } from "./actions";
 
 export const metadata = { title: "Tu privacidad · Portal ProyIT" };
 
-export default async function AceptarPrivacidadPage() {
+export default async function AceptarPrivacidadPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ siguiente?: string }>;
+}) {
+  const siguiente = destinoSeguro((await searchParams).siguiente);
   const { perfil } = await requireUsuario({ sinPolitica: true });
-  if (perfil?.privacidad_version === POLITICA_VERSION) redirect("/portal");
+  if (perfil?.privacidad_version === POLITICA_VERSION) redirect(siguiente);
   const esActualizacion = !!perfil?.privacidad_version;
 
   return (
@@ -55,6 +61,7 @@ export default async function AceptarPrivacidadPage() {
           </p>
 
           <form action={aceptarPoliticaAction} className="mt-6 space-y-4">
+            <input type="hidden" name="siguiente" value={siguiente} />
             <label className="flex items-start gap-3 text-sm">
               <input type="checkbox" name="acepto" required className="mt-0.5 h-4 w-4 accent-navy" />
               <span className="text-ink">He leído y acepto la Política de Privacidad del portal.</span>

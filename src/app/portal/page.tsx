@@ -54,6 +54,24 @@ export default async function PortalPage() {
         Aquí tienes todo lo que hacemos contigo, en un solo lugar.
       </p>
 
+      {/* Lo más urgente que viene a hacer un socio: pedir ayuda, a un toque. */}
+      {clientes && clientes.length > 0 && (
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <Link
+            href="/portal/tickets/nuevo"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange-text px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-orange/20 hover:bg-brand-orange-text-dark"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            Pedir soporte
+          </Link>
+          {nTickets > 0 && (
+            <Link href="/portal/tickets" className="text-center text-sm font-semibold text-navy hover:underline">
+              Ver mis tickets ({nTickets} {nTickets === 1 ? "abierto" : "abiertos"})
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="mt-10 grid gap-6 sm:grid-cols-2">
         {MODULOS.map((m) => {
           const href = MODULOS_ACTIVOS[m.key];

@@ -161,9 +161,11 @@ export default function AgendarDialogo() {
       document.documentElement.style.overflow = "hidden";
     }
     const alEvento = (e: Event) => abrir((e as CustomEvent<Apertura>).detail);
-    // proyit.tech/#agendar abre el formulario directo (útil para compartir el enlace).
+    // proyit.tech/#agendar y /#urgencia abren el formulario directo (útil para
+    // compartir el enlace o llegar desde el portal).
     const alHash = () => {
       if (window.location.hash === "#agendar") abrir({ modo: "diagnostico", origen: "enlace" });
+      if (window.location.hash === "#urgencia") abrir({ modo: "urgencia", origen: "enlace-urgencia" });
     };
     window.addEventListener(EVENTO, alEvento);
     window.addEventListener("hashchange", alHash);
@@ -234,7 +236,7 @@ export default function AgendarDialogo() {
   function alCerrar() {
     document.documentElement.style.overflow = "";
     setApertura(null);
-    if (window.location.hash === "#agendar") history.replaceState(null, "", window.location.pathname + window.location.search);
+    if (window.location.hash === "#agendar" || window.location.hash === "#urgencia") history.replaceState(null, "", window.location.pathname + window.location.search);
   }
 
   const actual = respuestaEn === vez ? estado : null;

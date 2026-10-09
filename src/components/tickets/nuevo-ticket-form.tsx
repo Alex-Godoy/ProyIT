@@ -23,6 +23,7 @@ export default function NuevoTicketForm({
   const router = useRouter();
   const [clienteId, setClienteId] = useState(clientes.length === 1 ? clientes[0].id : "");
   const [archivos, setArchivos] = useState<File[]>([]);
+  const [prioridad, setPrioridad] = useState<string>("media");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,7 +114,14 @@ export default function NuevoTicketForm({
           <label htmlFor="prioridad" className={labelClase}>
             Urgencia
           </label>
-          <select id="prioridad" name="prioridad" defaultValue="media" className={inputClase}>
+          <select
+            id="prioridad"
+            name="prioridad"
+            value={prioridad}
+            onChange={(e) => setPrioridad(e.target.value)}
+            aria-describedby="plazo-prioridad"
+            className={inputClase}
+          >
             {PRIORIDADES.map((p) => (
               <option key={p.valor} value={p.valor}>
                 {p.etiqueta}
@@ -121,6 +129,9 @@ export default function NuevoTicketForm({
               </option>
             ))}
           </select>
+          <p id="plazo-prioridad" className="mt-1.5 text-xs text-muted">
+            Te responderemos en menos de {PRIORIDADES.find((p) => p.valor === prioridad)?.horas ?? 24} horas.
+          </p>
         </div>
       </div>
 

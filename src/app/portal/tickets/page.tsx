@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUsuario } from "@/lib/auth";
 import { COLUMNAS_TICKET, ESTADOS_ABIERTOS } from "@/lib/tickets";
 import ListaTickets, { type FilaTicket } from "@/components/tickets/lista";
+import { CONTACTO_EMAIL } from "@/lib/sitio";
 
 export const metadata = { title: "Tickets de soporte · ProyIT" };
 
@@ -44,7 +45,23 @@ export default async function MisTicketsPage() {
       {(clientes ?? 0) === 0 ? (
         <div className="mt-8 rounded-2xl bg-white p-8 text-center ring-1 ring-slate-200">
           <p className="font-semibold text-ink">Tu cuenta aún no está vinculada a un cliente de ProyIT.</p>
-          <p className="mt-2 text-muted">Cuando lo esté, podrás crear tickets de soporte aquí.</p>
+          <p className="mt-2 text-muted">
+            Cuando lo esté, podrás crear tickets de soporte aquí. Si te suscribiste hace poco, lo activamos en
+            cuanto confirmemos tu plan.
+          </p>
+          {/* No dejar a nadie sin salida si tiene algo que no puede esperar. */}
+          <p className="mt-6 text-sm font-semibold text-ink">¿Necesitas ayuda ahora?</p>
+          <div className="mt-3 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/#urgencia"
+              className="rounded-lg bg-brand-orange-text px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-orange-text-dark"
+            >
+              Pedir atención urgente
+            </Link>
+            <a href={`mailto:${CONTACTO_EMAIL}`} className="text-sm font-semibold text-navy hover:underline">
+              Escribir a {CONTACTO_EMAIL}
+            </a>
+          </div>
         </div>
       ) : (
         <>

@@ -16,8 +16,12 @@ export type Perfil = {
 
 // Devuelve el cliente de Supabase junto al usuario y su perfil, o manda a /login.
 // Si no aceptó la versión vigente de la política de privacidad, lo manda a
-// aceptarla antes de mostrar cualquier dato (salvo `sinPolitica`).
-export async function requireUsuario({ sinPolitica = false }: { sinPolitica?: boolean } = {}) {
+// aceptarla antes de mostrar cualquier dato (salvo `sinPolitica`). `volverA` es
+// la página a la que vuelve después de aceptarla (por defecto, /portal).
+export async function requireUsuario({
+  sinPolitica = false,
+  volverA,
+}: { sinPolitica?: boolean; volverA?: string } = {}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,7 +34,8 @@ export async function requireUsuario({ sinPolitica = false }: { sinPolitica?: bo
     .eq("id", user.id)
     .maybeSingle<Perfil>();
 
-  if (!sinPolitica && perfil?.privacidad_version !== POLITICA_VERSION) redirect("/aceptar-privacidad");
+  if (!sinPolitica && perfil?.privacidad_version !== POLITICA_VERSION)
+    redirect(volverA ? `/aceptar-privacidad?siguiente=${encodeURIComponent(volverA)}` : "/aceptar-privacidad");
 
   return { supabase, user, perfil };
 }

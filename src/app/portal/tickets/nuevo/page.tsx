@@ -6,7 +6,9 @@ import NuevoTicketForm from "@/components/tickets/nuevo-ticket-form";
 export const metadata = { title: "Nuevo ticket · ProyIT" };
 
 export default async function NuevoTicketPage() {
-  const { supabase } = await requireUsuario();
+  // Se llega aquí desde "Pedir soporte" del home: si primero debe aceptar la
+  // política de privacidad, vuelve a este formulario y no al inicio del portal.
+  const { supabase } = await requireUsuario({ volverA: "/portal/tickets/nuevo" });
 
   // RLS: solo clientes y proyectos a los que la persona tiene acceso.
   const [{ data: clientes }, { data: proyectos }] = await Promise.all([

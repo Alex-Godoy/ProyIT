@@ -3,12 +3,15 @@ import type { ReactNode } from "react";
 import {
   BUCKET_TICKETS,
   COLUMNAS_TICKET,
+  estadoSla,
+  formatearPlazo,
   numeroTicket,
   type AdjuntoTicket,
   type MensajeTicket,
   type Ticket,
 } from "@/lib/tickets";
 import { formatearFechaHora, formatearTamano } from "@/lib/proyectos";
+import { CONTACTO_EMAIL } from "@/lib/sitio";
 import { etiquetaCargo } from "@/lib/permisos";
 import { EstadoTicketBadge, PrioridadBadge, SlaBadge } from "@/components/tickets/ui";
 import ResponderForm from "@/components/tickets/responder-form";
@@ -115,6 +118,8 @@ export function VistaTicket({
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
+        {vista === "cliente" && <PlazoRespuesta ticket={ticket} />}
+
         {/* Cabecera */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
@@ -216,5 +221,32 @@ export function VistaTicket({
         </section>
       </aside>
     </div>
+  );
+}
+
+// Lo que el cliente necesita saber apenas abre su ticket: hasta cuándo le
+// responderemos. Desaparece cuando el equipo responde o el ticket se cierra.
+function PlazoRespuesta({ ticket }: { ticket: Ticket }) {
+  const sla = estadoSla(ticket);
+  if (sla.tipo === "cumplido" || sla.tipo === "cerrado") return null;
+
+  if (sla.tipo === "vencido") {
+    return (
+      <p role="status" className="rounded-2xl bg-amber-50 px-5 py-4 text-sm text-amber-900 ring-1 ring-amber-200">
+        <strong className="font-semibold">Ya deberíamos haberte respondido.</strong> Disculpa la demora: tu ticket sigue
+        en la fila de atención. Si no puede esperar, escríbenos a{" "}
+        <a href={`mailto:${CONTACTO_EMAIL}`} className="font-semibold underline">
+          {CONTACTO_EMAIL}
+        </a>
+        .
+      </p>
+    );
+  }
+
+  return (
+    <p role="status" className="rounded-2xl bg-emerald-50 px-5 py-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
+      <strong className="font-semibold">Recibimos tu ticket.</strong> Te responderemos{" "}
+      <strong className="font-semibold">{formatearPlazo(ticket.vence_at)}</strong> como máximo. Verás la respuesta aquí.
+    </p>
   );
 }

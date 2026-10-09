@@ -21,6 +21,14 @@ export const CONTACTO_EMAIL = "contacto@proyit.tech";
 // (varios correos separados por coma).
 export const AVISOS_DIAGNOSTICO_PARA = ["alex.godoy@proyit.tech"];
 
+// Quién recibe el aviso de cada ticket de soporte que abre un cliente. Se puede
+// reemplazar con la variable AVISOS_SOPORTE_PARA (separados por coma).
+export const AVISOS_SOPORTE_PARA = AVISOS_DIAGNOSTICO_PARA;
+
+export function destinatarios(lista: string[], variable: string | undefined) {
+  return (variable?.split(",") ?? lista).map((c) => c.trim()).filter(Boolean);
+}
+
 // Dirección pública del portal para los enlaces de los correos. Es fija (no se
 // toma de la petición) para que nadie pueda colar un enlace a otro dominio.
 export const PORTAL_URL = process.env.PORTAL_URL || "https://portal-proyit.vercel.app";

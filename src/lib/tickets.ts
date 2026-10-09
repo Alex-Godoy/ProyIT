@@ -89,3 +89,18 @@ export function estadoSla(t: Pick<Ticket, "vence_at" | "primera_respuesta_at" | 
 export function numeroTicket(numero: number) {
   return `#${numero}`;
 }
+
+// "hoy a las 14:30", "mañana a las 09:00" o "el jueves 16 de octubre a las
+// 10:00", en hora de Chile. Es el plazo que se le promete al cliente.
+export function formatearPlazo(fecha: string, ahora = new Date()) {
+  const zona = "America/Santiago";
+  const dia = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: zona }).format(d);
+  const objetivo = new Date(fecha);
+  const hora = new Intl.DateTimeFormat("es-CL", { timeZone: zona, hour: "2-digit", minute: "2-digit", hour12: false }).format(objetivo);
+  if (dia(objetivo) === dia(ahora)) return `hoy a las ${hora}`;
+  if (dia(objetivo) === dia(new Date(ahora.getTime() + 86_400_000))) return `mañana a las ${hora}`;
+  const fechaLarga = new Intl.DateTimeFormat("es-CL", { timeZone: zona, weekday: "long", day: "numeric", month: "long" })
+    .format(objetivo)
+    .replace(",", "");
+  return `el ${fechaLarga} a las ${hora}`;
+}

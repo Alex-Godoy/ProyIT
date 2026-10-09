@@ -29,9 +29,80 @@ export function enlaceWhatsApp(mensaje: string) {
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
 }
 
+// ---------------------------------------------------------------------------
+// Soporte ProyIT: planes por suscripción. EJEMPLO para revisar: nombres,
+// precios, tiempos de respuesta y lo que incluye cada plan son compromisos
+// comerciales; ajústalos antes de publicarlos.
+// ---------------------------------------------------------------------------
+
+export type PlanSoporte = {
+  id: "basico" | "pyme" | "empresa";
+  nombre: string;
+  precio: string; // tal como se muestra ("$49.900")
+  periodo: string; // "/mes + IVA"
+  para: string;
+  respuesta: string; // tiempo de respuesta comprometido
+  incluye: string[];
+  destacado?: boolean;
+};
+
+export const PLANES_SOPORTE: PlanSoporte[] = [
+  {
+    id: "basico",
+    nombre: "Básico",
+    precio: "[PRECIO]",
+    periodo: "/mes + IVA",
+    para: "Emprendedores y equipos de hasta 3 personas",
+    respuesta: "Respuesta en menos de 8 horas hábiles",
+    incluye: [
+      "Hasta 3 equipos cubiertos",
+      "Soporte remoto en horario hábil",
+      "Mantención preventiva una vez al año",
+      "Descuento en reparaciones y repuestos",
+    ],
+  },
+  {
+    id: "pyme",
+    nombre: "Pyme",
+    precio: "[PRECIO]",
+    periodo: "/mes + IVA",
+    para: "Empresas de 4 a 15 personas",
+    respuesta: "Respuesta en menos de 4 horas hábiles",
+    incluye: [
+      "Hasta 15 equipos cubiertos",
+      "Soporte remoto y visita presencial si hace falta",
+      "Equipo de reemplazo mientras reparamos el tuyo",
+      "Mantención preventiva cada 6 meses",
+      "Respaldo de la información crítica",
+    ],
+    destacado: true,
+  },
+  {
+    id: "empresa",
+    nombre: "Empresa",
+    precio: "[PRECIO]",
+    periodo: "/mes + IVA",
+    para: "Empresas que no pueden detenerse",
+    respuesta: "Respuesta prioritaria en menos de 2 horas",
+    incluye: [
+      "Equipos cubiertos según tu operación",
+      "Visitas programadas y urgencias en terreno",
+      "Inventario de equipos, licencias y accesos",
+      "Plan de continuidad ante caídas",
+      "Reporte mensual de lo que hicimos",
+    ],
+  },
+];
+
+export const INTERES_URGENCIA = "Urgencia técnica";
+export const interesPlan = (p: PlanSoporte) => `Plan de soporte ${p.nombre}`;
+export const esInteresPlan = (interes: string | null) => Boolean(interes?.startsWith("Plan de soporte "));
+
 // Temas que el visitante puede elegir al pedir el diagnóstico. Los enlaces de
 // "Qué resolvemos" abren el formulario con el tema ya seleccionado.
 export const INTERESES = [
+  INTERES_URGENCIA,
+  ...PLANES_SOPORTE.map(interesPlan),
   "Agente de IA para WhatsApp",
   "Portal de clientes",
   "ProyContable",
@@ -41,9 +112,8 @@ export const INTERESES = [
   "Soporte y continuidad",
   "Automatización a medida",
   "Aún no lo sé",
-] as const;
+];
 
-export type Interes = (typeof INTERESES)[number];
 
 export const HORARIOS = [
   { valor: "manana", etiqueta: "Mañana" },

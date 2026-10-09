@@ -5,9 +5,52 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 import { solicitarDiagnosticoAction, type EstadoEnvio } from "@/app/diagnostico-acciones";
-import { CONTACTO_EMAIL, HORARIOS, INTERESES, WHATSAPP_NUMERO, enlaceWhatsApp } from "@/lib/sitio";
+import { CONTACTO_EMAIL, HORARIOS, INTERESES, INTERES_URGENCIA, WHATSAPP_NUMERO, enlaceWhatsApp } from "@/lib/sitio";
 
-type Modo = "diagnostico" | "conversacion";
+type Modo = "diagnostico" | "conversacion" | "urgencia" | "plan";
+
+// Lo que cambia según desde dónde se abrió el formulario.
+const TEXTOS: Record<
+  Modo,
+  { ceja: string; titulo: string; bajada: string; mensaje: string; ejemplo: string; exito: string }
+> = {
+  diagnostico: {
+    ceja: "Diagnóstico ProyIT",
+    titulo: "Agenda tu diagnóstico",
+    bajada: "Déjanos tus datos y te contactamos para coordinar. Toma menos de un minuto.",
+    mensaje: "Cuéntanos qué te duele hoy",
+    ejemplo: "Ej.: los pedidos llegan por WhatsApp y los anotamos a mano en una planilla.",
+    exito:
+      "Te escribiremos a la brevedad para coordinar el día y la hora. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
+  },
+  conversacion: {
+    ceja: "Primera conversación · 30 min · sin costo",
+    titulo: "Partamos por entender qué te duele",
+    bajada: "Déjanos tus datos y te contactamos para coordinar. Toma menos de un minuto.",
+    mensaje: "Cuéntanos qué te duele hoy",
+    ejemplo: "Ej.: los pedidos llegan por WhatsApp y los anotamos a mano en una planilla.",
+    exito:
+      "Te escribiremos a la brevedad para coordinar el día y la hora. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
+  },
+  urgencia: {
+    ceja: "Soporte urgente",
+    titulo: "Cuéntanos qué pasó",
+    bajada:
+      "Te llamamos o escribimos por WhatsApp lo antes posible. La atención puntual se cotiza antes de empezar; con un plan de soporte tienes prioridad.",
+    mensaje: "¿Qué está fallando?",
+    ejemplo: "Ej.: mi notebook no enciende desde esta mañana y tengo una entrega hoy.",
+    exito:
+      "Te contactaremos por teléfono o WhatsApp lo antes posible. Antes de empezar te diremos cuánto cuesta la atención.",
+  },
+  plan: {
+    ceja: "Soporte ProyIT",
+    titulo: "Suscríbete al plan de soporte",
+    bajada: "Déjanos tus datos y te contactamos para revisar tus equipos y activar tu plan.",
+    mensaje: "¿Cuántas personas y equipos tiene tu empresa?",
+    ejemplo: "Ej.: somos 6 personas, con 6 notebooks y una impresora.",
+    exito: "Te contactaremos a la brevedad para revisar tus equipos y activar tu plan.",
+  },
+};
 type Apertura = { modo: Modo; origen: string; interes?: string };
 
 const EVENTO = "proyit:agendar";
@@ -23,6 +66,8 @@ const VARIANTES = {
     "bg-brand-orange text-titulo hover:bg-[#ff8c3a] focus-visible:outline-brand-orange",
   contorno:
     "border border-white/25 text-white hover:border-white/50 hover:bg-white/5 focus-visible:outline-white",
+  // Para fondos claros.
+  oscuro: "bg-noche text-white hover:bg-navy focus-visible:outline-noche",
 } as const;
 
 export function BotonAgendar({
@@ -106,7 +151,7 @@ export default function AgendarDialogo() {
 
   useEffect(() => {
     function abrir(detalle: Apertura) {
-      setApertura(detalle);
+      setApertura(detalle.modo === "urgencia" && !detalle.interes ? { ...detalle, interes: INTERES_URGENCIA } : detalle);
       setVez((v) => v + 1);
       // Cada apertura pide una verificación nueva (los tokens son de un solo uso).
       setCaptchaToken(null);
@@ -152,6 +197,12 @@ export default function AgendarDialogo() {
     setIntentoCaptcha((n) => n + 1);
   }
 
+  function asuntoAlternativo() {
+    if (apertura?.modo === "urgencia") return "Soporte urgente";
+    if (apertura?.modo === "plan") return "Quiero suscribirme al plan de soporte";
+    return "Quiero agendar un diagnóstico";
+  }
+
   // Si la verificación falla, lo escrito no se pierde: va armado en el correo.
   function mensajeAlternativo() {
     const fd = formulario.current ? new FormData(formulario.current) : null;
@@ -168,7 +219,9 @@ export default function AgendarDialogo() {
       .filter(([, v]) => v)
       .map(([k, v]) => `${k}: ${v}`);
     return [
-      "Hola ProyIT, quiero agendar un diagnóstico.",
+      asuntoAlternativo() === "Soporte urgente"
+        ? "Hola ProyIT, necesito soporte urgente."
+        : "Hola ProyIT, quiero agendar un diagnóstico.",
       ...(datos.length ? ["", ...datos] : []),
       ...(campo("mensaje") ? ["", campo("mensaje")] : []),
     ].join("\n");
@@ -187,7 +240,8 @@ export default function AgendarDialogo() {
   const actual = respuestaEn === vez ? estado : null;
   const enviado = actual?.ok === true;
   const errorVisible = actual && !actual.ok ? actual.error : null;
-  const conversacion = apertura?.modo === "conversacion";
+  const textos = TEXTOS[apertura?.modo ?? "diagnostico"];
+  const urgencia = apertura?.modo === "urgencia";
 
   return (
     <dialog
@@ -204,15 +258,11 @@ export default function AgendarDialogo() {
         <div className="p-6 sm:p-8" key={vez}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-acento">
-                {conversacion ? "Primera conversación · 30 min · sin costo" : "Diagnóstico ProyIT"}
+              <p className={`text-xs font-bold uppercase tracking-[0.14em] ${urgencia ? "text-brand-orange-dark" : "text-acento"}`}>
+                {textos.ceja}
               </p>
               <h2 id="agendar-titulo" className="mt-2 font-display text-2xl font-bold leading-tight text-titulo sm:text-3xl">
-                {enviado
-                  ? "¡Recibimos tu solicitud!"
-                  : conversacion
-                    ? "Partamos por entender qué te duele"
-                    : "Agenda tu diagnóstico"}
+                {enviado ? "¡Recibimos tu solicitud!" : textos.titulo}
               </h2>
             </div>
             <button
@@ -227,10 +277,16 @@ export default function AgendarDialogo() {
 
           {enviado ? (
             <div className="mt-4">
-              <p className="text-muted">
-                Te escribiremos a la brevedad para coordinar el día y la hora. Si vemos que podemos ayudarte, te
-                proponemos el diagnóstico. Si no, te lo decimos.
-              </p>
+              <p className="text-muted">{textos.exito}</p>
+              {urgencia && (
+                <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-ink">
+                  ¿Quieres que la próxima vez sea más rápido?{" "}
+                  <a href="#planes-soporte" onClick={cerrar} className="font-semibold text-navy underline">
+                    Revisa los planes de soporte
+                  </a>
+                  : con suscripción tienes tiempo de respuesta garantizado.
+                </p>
+              )}
               <button
                 type="button"
                 onClick={cerrar}
@@ -242,9 +298,7 @@ export default function AgendarDialogo() {
             </div>
           ) : (
             <>
-              <p className="mt-2 text-sm text-muted">
-                Déjanos tus datos y te contactamos para coordinar. Toma menos de un minuto.
-              </p>
+              <p className="mt-2 text-sm text-muted">{textos.bajada}</p>
               <form
                 ref={formulario}
                 action={enviar}
@@ -284,9 +338,10 @@ export default function AgendarDialogo() {
                   </div>
                   <div>
                     <label htmlFor="ag-telefono" className={etiqueta}>
-                      WhatsApp o teléfono <span className="font-normal text-muted">(opcional)</span>
+                      WhatsApp o teléfono {!urgencia && <span className="font-normal text-muted">(opcional)</span>}
                     </label>
-                    <input id="ag-telefono" name="telefono" type="tel" inputMode="tel" maxLength={40} autoComplete="tel" placeholder="+56 9 1234 5678" className={campo} />
+                    {/* En una urgencia se llama: el teléfono es obligatorio. */}
+                    <input id="ag-telefono" name="telefono" type="tel" inputMode="tel" required={urgencia} minLength={urgencia ? 8 : undefined} maxLength={40} autoComplete="tel" placeholder="+56 9 1234 5678" className={campo} />
                   </div>
                 </div>
 
@@ -302,19 +357,21 @@ export default function AgendarDialogo() {
 
                 <div>
                   <label htmlFor="ag-mensaje" className={etiqueta}>
-                    Cuéntanos qué te duele hoy <span className="font-normal text-muted">(opcional)</span>
+                    {textos.mensaje} {!urgencia && <span className="font-normal text-muted">(opcional)</span>}
                   </label>
                   <textarea
                     id="ag-mensaje"
                     name="mensaje"
                     rows={3}
+                    required={urgencia}
                     maxLength={2000}
-                    placeholder="Ej.: los pedidos llegan por WhatsApp y los anotamos a mano en una planilla."
+                    placeholder={textos.ejemplo}
                     className={`${campo} resize-y`}
                   />
                 </div>
 
-                <fieldset>
+                {/* En una urgencia no se pregunta horario: se contacta lo antes posible. */}
+                <fieldset hidden={urgencia}>
                   <legend className={etiqueta}>¿Cuándo te acomoda que conversemos?</legend>
                   <div className="flex flex-wrap gap-2">
                     {HORARIOS.map((h, i) => (
@@ -361,7 +418,7 @@ export default function AgendarDialogo() {
                       <a
                         href={`mailto:${CONTACTO_EMAIL}`}
                         onClick={(e) => {
-                          e.currentTarget.href = `mailto:${CONTACTO_EMAIL}?subject=${encodeURIComponent("Quiero agendar un diagnóstico")}&body=${encodeURIComponent(mensajeAlternativo())}`;
+                          e.currentTarget.href = `mailto:${CONTACTO_EMAIL}?subject=${encodeURIComponent(asuntoAlternativo())}&body=${encodeURIComponent(mensajeAlternativo())}`;
                         }}
                         className="rounded-full bg-noche px-4 py-2 font-semibold text-white transition hover:bg-navy"
                       >

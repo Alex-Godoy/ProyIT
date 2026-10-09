@@ -6,7 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { enviarCorreo, escaparHtml } from "@/lib/correo";
 import { POLITICA_VERSION } from "@/lib/empresa";
-import { AVISOS_DIAGNOSTICO_PARA, ESTADOS_DIAGNOSTICO, HORARIOS, INTERESES, PORTAL_URL } from "@/lib/sitio";
+import {
+  AVISOS_DIAGNOSTICO_PARA,
+  ESTADOS_DIAGNOSTICO,
+  HORARIOS,
+  INTERESES,
+  INTERES_URGENCIA,
+  PORTAL_URL,
+  esInteresPlan,
+} from "@/lib/sitio";
 
 export type EstadoEnvio = { ok: boolean; error?: string } | null;
 
@@ -57,11 +65,51 @@ function destinatariosAviso() {
     .filter(Boolean);
 }
 
+// Las urgencias y los planes de soporte llegan por el mismo formulario; el
+// tema elegido decide cómo se presentan los correos.
+type Tipo = "urgencia" | "plan" | "diagnostico";
+
+function tipoDe(interes: string | null): Tipo {
+  if (interes === INTERES_URGENCIA) return "urgencia";
+  if (esInteresPlan(interes)) return "plan";
+  return "diagnostico";
+}
+
+const AVISO: Record<Tipo, { ceja: string; asunto: string; mensaje: string; color: string }> = {
+  urgencia: {
+    ceja: "Urgencia técnica · contactar hoy",
+    asunto: "URGENTE · Soporte técnico",
+    mensaje: "Qué está fallando",
+    color: "#b34700",
+  },
+  plan: {
+    ceja: "Interés en plan de soporte",
+    asunto: "Plan de soporte",
+    mensaje: "Personas y equipos",
+    color: "#1f6aa8",
+  },
+  diagnostico: {
+    ceja: "Nueva solicitud de diagnóstico",
+    asunto: "Nueva solicitud de diagnóstico",
+    mensaje: "Lo que le duele hoy",
+    color: "#1f6aa8",
+  },
+};
+
+const CONFIRMACION: Record<Tipo, string> = {
+  urgencia:
+    "Recibimos tu solicitud de soporte urgente. Te contactaremos por teléfono o WhatsApp lo antes posible y, antes de empezar, te diremos cuánto cuesta la atención.",
+  plan: "Recibimos tu interés en el plan de soporte. Te contactaremos a la brevedad para revisar tus equipos y activar tu plan.",
+  diagnostico:
+    "Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
+};
+
 // Aviso interno al equipo comercial. Todo lo que escribió el visitante se
 // escapa antes de ir al HTML; "Responder" le contesta directo a la persona.
 async function avisarNuevaSolicitud(s: NuevaSolicitud, urlAdmin: string) {
   const para = destinatariosAviso();
   if (para.length === 0) return;
+  const aviso = AVISO[tipoDe(s.interes)];
 
   const horario = HORARIOS.find((h) => h.valor === s.horario)?.etiqueta ?? null;
   const filas: [string, string | null][] = [
@@ -76,7 +124,7 @@ async function avisarNuevaSolicitud(s: NuevaSolicitud, urlAdmin: string) {
   const visibles = filas.filter((f): f is [string, string] => Boolean(f[1]));
 
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#0f1c2e;max-width:560px">
-  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:#1f6aa8">Nueva solicitud de diagnóstico</p>
+  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:${aviso.color}">${aviso.ceja}</p>
   <h1 style="margin:0 0 16px;font-size:20px">${escaparHtml(s.nombre)}${s.empresa ? ` · ${escaparHtml(s.empresa)}` : ""}</h1>
   <table style="border-collapse:collapse;width:100%;font-size:14px">${visibles
     .map(
@@ -84,23 +132,23 @@ async function avisarNuevaSolicitud(s: NuevaSolicitud, urlAdmin: string) {
         `<tr><td style="padding:6px 12px 6px 0;color:#5b6b80;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 0">${escaparHtml(v)}</td></tr>`,
     )
     .join("")}</table>
-  ${s.mensaje ? `<p style="margin:16px 0 4px;color:#5b6b80;font-size:13px">Lo que le duele hoy</p><p style="margin:0;padding:12px;background:#f4f7fb;border-radius:8px;font-size:14px;white-space:pre-line">${escaparHtml(s.mensaje)}</p>` : ""}
+  ${s.mensaje ? `<p style="margin:16px 0 4px;color:#5b6b80;font-size:13px">${aviso.mensaje}</p><p style="margin:0;padding:12px;background:#f4f7fb;border-radius:8px;font-size:14px;white-space:pre-line">${escaparHtml(s.mensaje)}</p>` : ""}
   <p style="margin:24px 0"><a href="${escaparHtml(urlAdmin)}" style="display:inline-block;background:#061e4a;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:bold">Gestionar en el portal</a></p>
   <p style="margin:0;color:#5b6b80;font-size:12px">Responde este correo para escribirle directamente a ${escaparHtml(s.nombre)}.</p>
 </div>`;
 
   const texto = [
-    "Nueva solicitud de diagnóstico",
+    aviso.ceja,
     "",
     ...visibles.map(([k, v]) => `${k}: ${v}`),
-    ...(s.mensaje ? ["", "Lo que le duele hoy:", s.mensaje] : []),
+    ...(s.mensaje ? ["", `${aviso.mensaje}:`, s.mensaje] : []),
     "",
     `Gestionar: ${urlAdmin}`,
   ].join("\n");
 
   await enviarCorreo({
     para,
-    asunto: `Nueva solicitud de diagnóstico: ${s.nombre}${s.empresa ? ` (${s.empresa})` : ""}`,
+    asunto: `${aviso.asunto}: ${s.nombre}${s.empresa ? ` (${s.empresa})` : ""}`,
     html,
     texto,
     responderA: s.email,
@@ -119,6 +167,7 @@ async function confirmarAlVisitante(s: NuevaSolicitud) {
   if (s.interes) detalles.push(["Tema", s.interes]);
   if (horario && s.horario !== "indistinto") detalles.push(["Prefieres conversar", horario]);
 
+  const cuerpo = CONFIRMACION[tipoDe(s.interes)];
   const logo = `${PORTAL_URL}/brand/proyit-logo-blanco.png`;
   const privacidad = `${PORTAL_URL}/privacidad`;
 
@@ -128,7 +177,7 @@ async function confirmarAlVisitante(s: NuevaSolicitud) {
     <div style="padding:28px">
       <h1 style="margin:0 0 12px;font-size:22px;color:#0b1f45">Recibimos tu solicitud</h1>
       <p style="margin:0 0 12px;font-size:15px;line-height:1.6">Hola, gracias por escribirnos.</p>
-      <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.</p>
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.6">${cuerpo}</p>
       ${
         detalles.length
           ? `<table style="border-collapse:collapse;font-size:14px;margin:0 0 16px">${detalles
@@ -153,7 +202,7 @@ async function confirmarAlVisitante(s: NuevaSolicitud) {
     "",
     "Hola, gracias por escribirnos.",
     "",
-    "Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
+    cuerpo,
     ...(detalles.length ? ["", ...detalles.map(([k, v]) => `${k}: ${v}`)] : []),
     "",
     "Si quieres contarnos algo más, responde este correo.",
@@ -185,6 +234,10 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: "Revisa tu correo: no parece válido." };
   if (fd.get("privacidad") !== "on")
     return { ok: false, error: "Para contactarte necesitamos que aceptes la política de privacidad." };
+  // En una urgencia se llama a la persona: sin teléfono no hay cómo.
+  const telefono = linea(fd, "telefono", 40);
+  if (interes === INTERES_URGENCIA && (telefono?.replace(/\D/g, "").length ?? 0) < 8)
+    return { ok: false, error: "Para atender tu urgencia necesitamos un teléfono o WhatsApp donde llamarte." };
   if (!(await captchaValido(texto(fd, "captcha", 4000))))
     return { ok: false, error: "No pudimos verificar que no eres un robot. Inténtalo de nuevo." };
 
@@ -195,7 +248,7 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
     nombre,
     empresa: linea(fd, "empresa", 120),
     email,
-    telefono: linea(fd, "telefono", 40),
+    telefono,
     interes: interes && (INTERESES as readonly string[]).includes(interes) ? interes : null,
     mensaje: texto(fd, "mensaje", 2000),
     horario: HORARIOS.some((h) => h.valor === horario) ? horario : null,

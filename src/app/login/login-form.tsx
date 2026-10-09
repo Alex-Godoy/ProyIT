@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { POLITICA_VERSION } from "@/lib/empresa";
+import { destinoSeguro } from "@/lib/destino";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 
 type Modo = "ingreso" | "registro" | "recuperar";
@@ -36,6 +37,8 @@ export default function LoginForm() {
   );
 
   const supabase = createClient();
+  // Página a la que iba antes de que se le pidiera ingresar.
+  const siguiente = destinoSeguro(params.get("siguiente"));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,7 +81,7 @@ export default function LoginForm() {
               : "No pudimos iniciar sesión. Inténtalo de nuevo."
         );
       } else {
-        router.push("/portal");
+        router.push(siguiente);
         router.refresh();
       }
     } else {
@@ -100,7 +103,7 @@ export default function LoginForm() {
               : "No pudimos crear tu cuenta. Revisa los datos e inténtalo de nuevo."
         );
       } else if (data.session) {
-        router.push("/portal");
+        router.push(siguiente);
         router.refresh();
       } else {
         setAviso("¡Listo! Te enviamos un correo para confirmar tu cuenta.");
@@ -115,7 +118,7 @@ export default function LoginForm() {
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(siguiente)}` },
     });
     if (error) setError("El ingreso con Google aún no está habilitado.");
   }

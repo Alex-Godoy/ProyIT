@@ -9,8 +9,10 @@ import { BotonAgendar } from "./agendar";
 const SECCIONES = [
   { id: "como-trabajamos", label: "Cómo trabajamos" },
   { id: "lo-que-construimos", label: "Lo que construimos" },
+  { id: "soporte", label: "Soporte" },
   { id: "que-resolvemos", label: "Qué resolvemos" },
-  { id: "clientes", label: "Clientes" },
+  // En escritorio no cabe junto a "Soporte": queda solo en el menú móvil.
+  { id: "clientes", label: "Clientes", soloMovil: true },
 ];
 
 export default function Encabezado() {
@@ -62,8 +64,8 @@ export default function Encabezado() {
           <Image src={logoBlanco} alt="ProyIT" priority className="h-7 w-auto sm:h-8" />
         </Link>
 
-        <nav aria-label="Secciones" className="hidden items-center gap-7 text-sm lg:flex">
-          {SECCIONES.map((s) => (
+        <nav aria-label="Secciones" className="hidden items-center gap-6 whitespace-nowrap text-sm lg:flex">
+          {SECCIONES.filter((s) => !("soloMovil" in s)).map((s) => (
             <a
               key={s.id}
               href={`#${s.id}`}
@@ -76,7 +78,7 @@ export default function Encabezado() {
           <Link href="/login" className="text-white/80 transition hover:text-white">
             Portal clientes
           </Link>
-          <BotonAgendar origen="menu" className="px-5 py-2.5">
+          <BotonAgendar origen="menu" className="whitespace-nowrap px-5 py-2.5">
             Agendar diagnóstico
           </BotonAgendar>
         </nav>

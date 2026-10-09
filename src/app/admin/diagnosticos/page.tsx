@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { formatearFechaHora } from "@/lib/proyectos";
-import { ESTADOS_DIAGNOSTICO, HORARIOS } from "@/lib/sitio";
+import { ESTADOS_DIAGNOSTICO, HORARIOS, INTERES_URGENCIA, esInteresPlan } from "@/lib/sitio";
 import { BotonEnviar, inputClase, labelClase } from "@/components/admin/ui";
 import { actualizarDiagnosticoAction } from "@/app/diagnostico-acciones";
 
@@ -39,15 +39,19 @@ export default async function AdminDiagnosticosPage() {
     .order("created_at", { ascending: false })
     .limit(200);
   const solicitudes = (data ?? []) as Diagnostico[];
-  const abiertas = solicitudes.filter((s) => s.estado === "nueva" || s.estado === "contactada");
+  // Las urgencias técnicas van primero: hay que contactarlas el mismo día.
+  const esUrgente = (s: Diagnostico) => s.interes === INTERES_URGENCIA;
+  const abiertas = solicitudes
+    .filter((s) => s.estado === "nueva" || s.estado === "contactada")
+    .sort((a, b) => Number(esUrgente(b)) - Number(esUrgente(a)));
   const cerradas = solicitudes.filter((s) => s.estado === "agendada" || s.estado === "descartada");
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <h1 className="text-2xl font-bold text-navy">Solicitudes de diagnóstico</h1>
+      <h1 className="text-2xl font-bold text-navy">Solicitudes del sitio</h1>
       <p className="mt-1 max-w-2xl text-muted">
-        Personas que pidieron un diagnóstico o una primera conversación desde el sitio. Contáctalas y registra en qué
-        quedó cada una.
+        Diagnósticos, urgencias técnicas e interés en planes de soporte que llegan desde el home. Contacta a cada
+        persona y registra en qué quedó. Las urgencias aparecen primero.
       </p>
 
       {[
@@ -63,10 +67,25 @@ export default async function AdminDiagnosticosPage() {
           ) : (
             <ul className="mt-3 space-y-4">
               {grupo.lista.map((s) => (
-                <li key={s.id} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+                <li
+                  key={s.id}
+                  className={`rounded-2xl bg-white p-5 shadow-sm sm:p-6 ${
+                    esUrgente(s) && grupo.titulo === "Por gestionar" ? "ring-2 ring-brand-orange" : "ring-1 ring-slate-200"
+                  }`}
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold text-ink">
+                        {esUrgente(s) && (
+                          <span className="mr-2 rounded-full bg-brand-orange-text px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-wide text-white">
+                            Urgente
+                          </span>
+                        )}
+                        {esInteresPlan(s.interes) && (
+                          <span className="mr-2 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-wide text-sky-800">
+                            Plan de soporte
+                          </span>
+                        )}
                         {s.nombre}
                         {s.empresa && <span className="font-normal text-muted"> · {s.empresa}</span>}
                       </p>

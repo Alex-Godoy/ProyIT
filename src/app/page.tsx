@@ -4,7 +4,7 @@ import logoBlanco from "../../public/brand/proyit-logo-blanco.png";
 import Encabezado from "@/components/home/encabezado";
 import AgendarDialogo, { BotonAgendar, EnlaceAgendar } from "@/components/home/agendar";
 import EnlaceSolucion from "@/components/home/enlace-solucion";
-import { DIAGNOSTICO, WHATSAPP_NUMERO, enlaceWhatsApp } from "@/lib/sitio";
+import { DIAGNOSTICO, PLANES_SOPORTE, WHATSAPP_NUMERO, enlaceWhatsApp, interesPlan } from "@/lib/sitio";
 
 export const metadata = {
   title: "ProyIT · Tecnología a la medida de tu operación",
@@ -144,6 +144,7 @@ const PROBLEMAS: { cita: string; quien: string; solucion: string; destino?: stri
     cita: "Todo mi TI depende de una sola persona.",
     quien: "Empresas sin equipo de TI",
     solucion: "Soporte y continuidad",
+    destino: "planes-soporte",
   },
   {
     cita: "Hacemos a mano lo que debería ser automático.",
@@ -159,6 +160,16 @@ const TESTIMONIOS = [
     quien: "Cliente ecommerce",
   },
 ];
+
+// El socio pide ayuda desde el portal; si no ha ingresado, el login lo
+// devuelve aquí después.
+const PEDIR_SOPORTE = "/portal/tickets/nuevo";
+
+const iconoCheck = (
+  <svg className="mt-0.5 h-4 w-4 shrink-0 text-acento" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+);
 
 const ceja = "text-xs font-bold uppercase tracking-[0.14em]";
 const tituloSeccion = "font-display text-3xl font-extrabold leading-[1.08] tracking-tight text-titulo sm:text-4xl lg:text-[44px]";
@@ -202,6 +213,18 @@ export default function Home() {
                 </p>
                 <p>El plan es tuyo, lo construyas con nosotros o no</p>
               </div>
+              {/* Quien llega con algo que falla hoy lo ve sin hacer scroll. */}
+              <a
+                href="#soporte-ayuda"
+                className="mt-6 inline-flex items-center gap-2.5 rounded-full border border-brand-orange/40 bg-brand-orange/10 py-2 pl-2 pr-4 text-sm text-white transition hover:border-brand-orange hover:bg-brand-orange/20"
+              >
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-orange text-titulo" aria-hidden="true">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v5M12 17h.01" /></svg>
+                </span>
+                <span>
+                  ¿Se cayó tu notebook o tu sistema? <strong className="font-semibold">Soporte urgente →</strong>
+                </span>
+              </a>
             </div>
 
             <aside className="rounded-2xl bg-white p-6 text-ink shadow-2xl shadow-black/30 sm:p-7">
@@ -306,6 +329,105 @@ export default function Home() {
                   </p>
                 </article>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Soporte por suscripción */}
+        <section id="soporte" className="scroll-mt-20 border-b border-slate-200 py-20 lg:py-24">
+          <div className={contenedor}>
+            <p className={`${ceja} text-acento`}>Soporte ProyIT</p>
+            <h2 className={`${tituloSeccion} mt-3 max-w-3xl`}>Tu tecnología funcionando, sin tener un área de TI.</h2>
+            <p className="mt-4 max-w-2xl leading-relaxed text-muted">
+              Cuando algo falla no hay tiempo para buscar a quién llamar. Con un plan de soporte tienes un equipo que ya
+              conoce tus equipos y responde en horas, no en días.
+            </p>
+
+            {/* Urgencia primero: quien llega apurado desde el home rara vez es socio. */}
+            <div id="soporte-ayuda" className="mt-10 grid scroll-mt-24 gap-4 md:grid-cols-2">
+              <div className="flex flex-col rounded-2xl border-[1.5px] border-brand-orange bg-white p-6 sm:p-7">
+                <p className={`${ceja} text-brand-orange-dark`}>¿Aún no eres socio?</p>
+                <h3 className="mt-2 font-display text-xl font-bold text-titulo">¿Tienes una urgencia ahora?</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-muted">
+                  Igual te ayudamos. Cuéntanos qué pasó y te contactamos lo antes posible. La atención puntual se
+                  cotiza antes de empezar.
+                </p>
+                <div className="mt-6 sm:mt-auto sm:pt-6">
+                  <BotonAgendar modo="urgencia" origen="soporte" className="w-full sm:w-auto">
+                    Pedir atención urgente
+                  </BotonAgendar>
+                </div>
+              </div>
+              <div className="flex flex-col rounded-2xl bg-noche p-6 text-white sm:p-7">
+                <p className={`${ceja} text-brand-orange`}>Socios con plan</p>
+                <h3 className="mt-2 font-display text-xl font-bold">¿Ya tienes plan de soporte?</h3>
+                <p className="mt-2 text-[15px] leading-relaxed text-white/75">
+                  Pide ayuda desde tu portal: tu solicitud entra con la prioridad de tu plan y ves su avance en línea.
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:mt-auto sm:flex-row sm:items-center sm:pt-6">
+                  <Link
+                    href={PEDIR_SOPORTE}
+                    className="inline-flex items-center justify-center rounded-full bg-brand-orange px-6 py-3 text-sm font-semibold text-titulo transition hover:bg-[#ff8c3a]"
+                  >
+                    Pedir soporte
+                  </Link>
+                  <Link href="/login" className="text-center text-sm font-semibold text-white/80 hover:text-white">
+                    Ingresar al portal
+                  </Link>
+                </div>
+              </div>
+
+            </div>
+
+            <div id="planes-soporte" className="mt-16 scroll-mt-24 rounded-3xl">
+              <h3 className="font-display text-2xl font-bold text-titulo sm:text-3xl">Planes de soporte</h3>
+              <p className="mt-2 max-w-2xl text-muted">
+                Con plan, una urgencia es una llamada. Sin plan, es una búsqueda contra el tiempo.
+              </p>
+              <div className="mt-8 grid gap-4 lg:grid-cols-3">
+                {PLANES_SOPORTE.map((p) => (
+                  <article
+                    key={p.id}
+                    className={`relative flex flex-col rounded-2xl p-6 sm:p-7 ${
+                      p.destacado ? "bg-white shadow-xl ring-2 ring-noche" : "border border-slate-200 bg-surface"
+                    }`}
+                  >
+                    {p.destacado && (
+                      <span className="absolute -top-3 left-6 rounded-full bg-brand-orange px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-titulo">
+                        Recomendado
+                      </span>
+                    )}
+                    <h4 className="font-display text-xl font-bold text-titulo">{p.nombre}</h4>
+                    <p className="mt-1 text-[13px] text-muted">{p.para}</p>
+                    <p className="mt-4 text-titulo">
+                      <span className="font-display text-3xl font-extrabold">{p.precio}</span>{" "}
+                      <span className="text-sm text-muted">{p.periodo}</span>
+                    </p>
+                    <p className="mt-3 rounded-lg bg-brand-orange/10 px-3 py-2 text-sm font-semibold text-brand-orange-dark">
+                      {p.respuesta}
+                    </p>
+                    <ul className="mt-5 space-y-2.5 text-sm leading-snug text-ink">
+                      {p.incluye.map((i) => (
+                        <li key={i} className="flex gap-2.5">
+                          {iconoCheck}
+                          <span>{i}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6 pt-2 lg:mt-auto">
+                      <BotonAgendar
+                        modo="plan"
+                        origen={`plan-${p.id}`}
+                        interes={interesPlan(p)}
+                        variante={p.destacado ? "naranjo" : "oscuro"}
+                        className="w-full"
+                      >
+                        Quiero el plan {p.nombre}
+                      </BotonAgendar>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </section>

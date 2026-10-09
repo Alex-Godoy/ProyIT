@@ -68,7 +68,11 @@ const VARIANTES = {
     "border border-white/25 text-white hover:border-white/50 hover:bg-white/5 focus-visible:outline-white",
   // Para fondos claros.
   oscuro: "bg-noche text-white hover:bg-navy focus-visible:outline-noche",
+  contornoOscuro: "border border-noche text-noche hover:bg-noche hover:text-white focus-visible:outline-noche",
 } as const;
+
+// Los botones se elevan un poco al pasar el mouse (como en el mockup del home).
+const ELEVAR = "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(7,49,125,0.18)] motion-reduce:hover:translate-y-0";
 
 export function BotonAgendar({
   children,
@@ -90,7 +94,7 @@ export function BotonAgendar({
       type="button"
       aria-haspopup="dialog"
       onClick={() => abrirAgendar({ modo, origen, interes })}
-      className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${VARIANTES[variante]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${ELEVAR} ${VARIANTES[variante]} ${className}`}
     >
       {children}
     </button>
@@ -98,13 +102,21 @@ export function BotonAgendar({
 }
 
 // Enlace de texto ("Portal de clientes →") que abre el formulario con el tema elegido.
-export function EnlaceAgendar({ interes, children }: { interes: string; children: React.ReactNode }) {
+export function EnlaceAgendar({
+  interes,
+  children,
+  className = "text-left text-sm font-semibold text-navy hover:underline",
+}: {
+  interes: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       aria-haspopup="dialog"
       onClick={() => abrirAgendar({ modo: "diagnostico", origen: "que-resolvemos", interes })}
-      className="text-left text-sm font-semibold text-navy hover:underline"
+      className={className}
     >
       {children}
     </button>

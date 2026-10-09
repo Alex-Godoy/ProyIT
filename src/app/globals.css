@@ -12,10 +12,14 @@
   --color-ink: #0f1c2e;
   --color-muted: #5b6b80;
   --color-surface: #f4f7fb;
-  /* Home público */
-  --color-noche: #061e4a;
-  --color-titulo: #0b1f45;
-  --color-acento: #1f6aa8;
+  /* Home público: paleta tomada del logo (mockup proyit-diseno) */
+  --color-noche: #07317d;
+  --color-noche-claro: #1450a8;
+  --color-titulo: #07317d;
+  --color-acento: #1a64b0;
+  --color-texto-suave: #4a5a70;
+  --color-celeste: #ddeefb;
+  --color-durazno: #ffe9d6;
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-inter), system-ui, sans-serif;
 }

@@ -2,7 +2,15 @@
 
 // Lleva a la tarjeta de la solución en "Lo que construimos" y la resalta un
 // momento para que se note a dónde llegó.
-export default function EnlaceSolucion({ destino, children }: { destino: string; children: React.ReactNode }) {
+export default function EnlaceSolucion({
+  destino,
+  children,
+  className = "text-sm font-semibold text-navy hover:underline",
+}: {
+  destino: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <a
       href={`#${destino}`}
@@ -14,7 +22,7 @@ export default function EnlaceSolucion({ destino, children }: { destino: string;
         void tarjeta.offsetWidth;
         tarjeta.classList.add("destacado");
       }}
-      className="text-sm font-semibold text-navy hover:underline"
+      className={className}
     >
       {children}
     </a>

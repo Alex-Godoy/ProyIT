@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { POLITICA_VERSION } from "@/lib/empresa";
 import { destinoSeguro } from "@/lib/destino";
+import { CORREO_RECUPERACION } from "@/lib/recuperacion";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 
 type Modo = "ingreso" | "registro" | "recuperar";
@@ -16,9 +17,10 @@ const MENSAJE_CAPTCHA = "No pudimos verificar que eres una persona. Espera la ve
 export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [modo, setModo] = useState<Modo>(
-    params.get("modo") === "registro" ? "registro" : "ingreso"
-  );
+  const [modo, setModo] = useState<Modo>(() => {
+    const pedido = params.get("modo");
+    return pedido === "registro" || pedido === "recuperar" ? pedido : "ingreso";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
@@ -52,17 +54,28 @@ export default function LoginForm() {
     setCargando(true);
 
     if (modo === "recuperar") {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/restablecer`,
+      // Se envía un código, no un enlace: los rastreadores de correo (Gmail,
+      // antivirus) abren los enlaces de un solo uso antes que la persona y los
+      // dejan vencidos. El código se escribe en /restablecer. La plantilla
+      // "Reset Password" de Supabase debe incluir {{ .Token }}.
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         captchaToken: captchaToken ?? undefined,
       });
       if (error && /captcha/i.test(error.message)) {
         setError(MENSAJE_CAPTCHA);
+      } else if (error && /rate|security purposes/i.test(error.message)) {
+        setError("Ya pediste un código hace poco. Espera un minuto y vuelve a intentarlo.");
       } else if (error) {
         setError("No pudimos enviar el correo. Inténtalo de nuevo en unos minutos.");
       } else {
-        // Mismo mensaje exista o no la cuenta, para no revelar quién está registrado.
-        setAviso("Si ese correo tiene una cuenta, te enviamos un enlace para crear una nueva contraseña. Revisa tu bandeja y el spam.");
+        // El correo viaja en sessionStorage, no en la URL (dato personal).
+        try {
+          sessionStorage.setItem(CORREO_RECUPERACION, email.trim());
+        } catch {
+          // Sin sessionStorage la persona lo vuelve a escribir en /restablecer.
+        }
+        router.push("/restablecer");
+        return;
       }
     } else if (modo === "ingreso") {
       const { error } = await supabase.auth.signInWithPassword({
@@ -145,7 +158,7 @@ export default function LoginForm() {
             : "Bienvenido de vuelta."
           : modo === "registro"
             ? "Usa el correo con el que trabajas con ProyIT."
-            : "Escribe tu correo y te enviaremos un enlace para crear una nueva."}
+            : "Escribe tu correo y te enviaremos un código para crear una nueva."}
       </p>
 
       {modo !== "recuperar" && (
@@ -260,7 +273,7 @@ export default function LoginForm() {
               ? "Ingresar"
               : modo === "registro"
                 ? "Crear cuenta"
-                : "Enviar enlace"}
+                : "Enviar código"}
         </button>
       </form>
 

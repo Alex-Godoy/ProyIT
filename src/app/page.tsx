@@ -5,6 +5,7 @@ import Encabezado from "@/components/home/encabezado";
 import AgendarDialogo, { BotonAgendar, EnlaceAgendar } from "@/components/home/agendar";
 import EnlaceSolucion from "@/components/home/enlace-solucion";
 import { DIAGNOSTICO, PLANES_SOPORTE, WHATSAPP_NUMERO, enlaceWhatsApp, interesPlan } from "@/lib/sitio";
+import { DIAGNOSTICO_OFICINA } from "@/lib/soporte";
 
 export const metadata = {
   title: "ProyIT · Tecnología a la medida de tu operación",
@@ -379,11 +380,18 @@ export default function Home() {
 
             </div>
 
-            <div id="planes-soporte" className="mt-16 scroll-mt-24 rounded-3xl">
-              <h3 className="font-display text-2xl font-bold text-titulo sm:text-3xl">Planes de soporte</h3>
-              <p className="mt-2 max-w-2xl text-muted">
-                Con plan, una urgencia es una llamada. Sin plan, es una búsqueda contra el tiempo.
-              </p>
+            <div id="planes-soporte" className="mt-16 scroll-mt-24">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <h3 className="font-display text-2xl font-bold text-titulo sm:text-3xl">Planes de soporte para empresas</h3>
+                  <p className="mt-2 max-w-2xl text-muted">
+                    Con plan, una urgencia es una llamada. Y pagas hasta 21% menos que por cada servicio suelto.
+                  </p>
+                </div>
+                <Link href="/soporte#empresas" className="text-sm font-semibold text-navy hover:underline">
+                  Comparar planes en detalle →
+                </Link>
+              </div>
               <div className="mt-8 grid gap-4 lg:grid-cols-3">
                 {PLANES_SOPORTE.map((p) => (
                   <article
@@ -394,14 +402,14 @@ export default function Home() {
                   >
                     {p.destacado && (
                       <span className="absolute -top-3 left-6 rounded-full bg-brand-orange px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-titulo">
-                        Recomendado
+                        Más elegido
                       </span>
                     )}
                     <h4 className="font-display text-xl font-bold text-titulo">{p.nombre}</h4>
-                    <p className="mt-1 text-[13px] text-muted">{p.para}</p>
+                    <p className="mt-1 text-[13px] text-muted">{p.equipos}</p>
                     <p className="mt-4 text-titulo">
                       <span className="font-display text-3xl font-extrabold">{p.precio}</span>{" "}
-                      <span className="text-sm text-muted">{p.periodo}</span>
+                      <span className="text-sm text-muted">/ mes</span>
                     </p>
                     <p className="mt-3 rounded-lg bg-brand-orange/10 px-3 py-2 text-sm font-semibold text-brand-orange-dark">
                       {p.respuesta}
@@ -428,7 +436,30 @@ export default function Home() {
                   </article>
                 ))}
               </div>
+              <p className="mt-4 text-sm text-muted">
+                Valores IVA incluido. Partimos con un diagnóstico TI de tu oficina por {DIAGNOSTICO_OFICINA}, que se
+                descuenta de la primera mensualidad si contratas un plan.
+              </p>
             </div>
+
+            {/* El detalle (urgencias, reparación de equipos y precios) vive en /soporte. */}
+            <Link
+              href="/soporte"
+              className="mt-10 flex flex-col gap-5 rounded-2xl bg-noche p-6 text-white transition hover:bg-navy sm:flex-row sm:items-center sm:justify-between sm:p-7"
+            >
+              <span>
+                <span className="block font-display text-xl font-bold">
+                  ¿Hay que reparar un notebook o necesitas atención de noche o en feriado?
+                </span>
+                <span className="mt-1.5 block text-[15px] leading-relaxed text-white/75">
+                  Revisa los precios de reparación, los recargos por urgencia y cómo el diagnóstico se descuenta de la
+                  reparación.
+                </span>
+              </span>
+              <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-brand-orange px-6 py-3 text-sm font-semibold text-titulo">
+                Ver soporte y precios →
+              </span>
+            </Link>
           </div>
         </section>
 
@@ -519,6 +550,9 @@ export default function Home() {
               <p>Tecnología cercana, implementada con criterio de negocio · Chile</p>
             </div>
             <p className="flex gap-4">
+              <Link href="/soporte" className="hover:text-white">
+                Soporte TI
+              </Link>
               <Link href="/login" className="hover:text-white">
                 Portal clientes
               </Link>

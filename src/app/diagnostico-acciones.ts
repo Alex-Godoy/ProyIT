@@ -16,6 +16,7 @@ import {
   destinatarios,
   esInteresPlan,
 } from "@/lib/sitio";
+import { INTERESES_SERVICIO, esInteresServicio } from "@/lib/soporte";
 
 export type EstadoEnvio = { ok: boolean; error?: string } | null;
 
@@ -64,13 +65,14 @@ function destinatariosAviso() {
   return destinatarios(AVISOS_DIAGNOSTICO_PARA, process.env.AVISOS_DIAGNOSTICO_PARA);
 }
 
-// Las urgencias y los planes de soporte llegan por el mismo formulario; el
-// tema elegido decide cómo se presentan los correos.
-type Tipo = "urgencia" | "plan" | "diagnostico";
+// Las urgencias, los planes y los servicios técnicos (/soporte) llegan por el
+// mismo formulario; el tema elegido decide cómo se presentan los correos.
+type Tipo = "urgencia" | "plan" | "servicio" | "diagnostico";
 
 function tipoDe(interes: string | null): Tipo {
   if (interes === INTERES_URGENCIA) return "urgencia";
   if (esInteresPlan(interes)) return "plan";
+  if (esInteresServicio(interes)) return "servicio";
   return "diagnostico";
 }
 
@@ -87,6 +89,12 @@ const AVISO: Record<Tipo, { ceja: string; asunto: string; mensaje: string; color
     mensaje: "Personas y equipos",
     color: "#1f6aa8",
   },
+  servicio: {
+    ceja: "Solicitud de servicio técnico",
+    asunto: "Servicio técnico",
+    mensaje: "Qué le pasa al equipo",
+    color: "#1f6aa8",
+  },
   diagnostico: {
     ceja: "Nueva solicitud de diagnóstico",
     asunto: "Nueva solicitud de diagnóstico",
@@ -99,6 +107,8 @@ const CONFIRMACION: Record<Tipo, string> = {
   urgencia:
     "Recibimos tu solicitud de soporte urgente. Te contactaremos por teléfono o WhatsApp lo antes posible y, antes de empezar, te diremos cuánto cuesta la atención.",
   plan: "Recibimos tu interés en el plan de soporte. Te contactaremos a la brevedad para revisar tus equipos y activar tu plan.",
+  servicio:
+    "Recibimos tu solicitud de servicio técnico. Te escribiremos por WhatsApp para coordinar. Recuerda que el diagnóstico es gratis si aceptas el servicio.",
   diagnostico:
     "Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
 };
@@ -240,6 +250,9 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
   if (!(await captchaValido(texto(fd, "captcha", 4000))))
     return { ok: false, error: "No pudimos verificar que no eres un robot. Inténtalo de nuevo." };
 
+  // La comuna (solo en el formulario de /soporte) va al inicio del mensaje.
+  const comuna = linea(fd, "comuna", 80);
+
   // El id se genera aquí (el visitante no puede leer la fila después de
   // insertarla) para usarlo como clave del aviso por correo.
   const solicitud: NuevaSolicitud = {
@@ -248,8 +261,8 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
     empresa: linea(fd, "empresa", 120),
     email,
     telefono,
-    interes: interes && (INTERESES as readonly string[]).includes(interes) ? interes : null,
-    mensaje: texto(fd, "mensaje", 2000),
+    interes: interes && [...INTERESES, ...INTERESES_SERVICIO].includes(interes) ? interes : null,
+    mensaje: [comuna && `Comuna: ${comuna}`, texto(fd, "mensaje", 2000)].filter(Boolean).join("\n\n") || null,
     horario: HORARIOS.some((h) => h.valor === horario) ? horario : null,
     origen: texto(fd, "origen", 40),
   };

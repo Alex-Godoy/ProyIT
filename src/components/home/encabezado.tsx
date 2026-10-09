@@ -2,20 +2,28 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import logoBlanco from "../../../public/brand/proyit-logo-blanco.png";
 import { BotonAgendar } from "./agendar";
 
-const SECCIONES = [
+type Seccion = { id: string; label: string; pagina?: string; soloMovil?: boolean };
+
+const SECCIONES: Seccion[] = [
   { id: "como-trabajamos", label: "Cómo trabajamos" },
   { id: "lo-que-construimos", label: "Lo que construimos" },
-  { id: "soporte", label: "Soporte" },
+  // Soporte tiene página propia (planes, urgencias, reparaciones y precios).
+  { id: "soporte", label: "Soporte", pagina: "/soporte" },
   { id: "que-resolvemos", label: "Qué resolvemos" },
   // En escritorio no cabe junto a "Soporte": queda solo en el menú móvil.
   { id: "clientes", label: "Clientes", soloMovil: true },
 ];
 
 export default function Encabezado() {
+  const pathname = usePathname();
+  // Fuera del home (p. ej. en /soporte) las secciones llevan de vuelta al home.
+  const href = (s: Seccion) => s.pagina ?? (pathname === "/" ? `#${s.id}` : `/#${s.id}`);
+  const esActiva = (s: Seccion, activa: string | null) => pathname === s.pagina || activa === s.id;
   const [abierto, setAbierto] = useState(false);
   const [conSombra, setConSombra] = useState(false);
   const [activa, setActiva] = useState<string | null>(null);
@@ -65,15 +73,15 @@ export default function Encabezado() {
         </Link>
 
         <nav aria-label="Secciones" className="hidden items-center gap-6 whitespace-nowrap text-sm lg:flex">
-          {SECCIONES.filter((s) => !("soloMovil" in s)).map((s) => (
-            <a
+          {SECCIONES.filter((s) => !s.soloMovil).map((s) => (
+            <Link
               key={s.id}
-              href={`#${s.id}`}
-              aria-current={activa === s.id ? "true" : undefined}
-              className={`transition hover:text-white ${activa === s.id ? "text-white" : "text-white/80"}`}
+              href={href(s)}
+              aria-current={esActiva(s, activa) ? "true" : undefined}
+              className={`transition hover:text-white ${esActiva(s, activa) ? "text-white" : "text-white/80"}`}
             >
               {s.label}
-            </a>
+            </Link>
           ))}
           <Link href="/login" className="text-white/80 transition hover:text-white">
             Portal clientes
@@ -102,13 +110,13 @@ export default function Encabezado() {
           <ul className="flex flex-col">
             {SECCIONES.map((s) => (
               <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
+                <Link
+                  href={href(s)}
                   onClick={() => setAbierto(false)}
                   className="block border-b border-white/10 py-3.5 text-base text-white/90"
                 >
                   {s.label}
-                </a>
+                </Link>
               </li>
             ))}
             <li>

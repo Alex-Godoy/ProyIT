@@ -67,25 +67,26 @@ export const PRECIOS_SUELTOS = {
   equipoAdicional: "$29.990",
 };
 
+// Con plan, si acepta la reparación, la atención urgente cuesta este porcentaje
+// menos. Sin plan se paga el valor completo, recargo incluido.
+export const DESCUENTO_URGENCIA_CON_PLAN = "30%";
+
 export const RECARGOS_URGENCIA = [
   {
     recargo: "+30%",
     titulo: "Urgente en horario hábil",
     detalle: "Atención el mismo día, con prioridad. Lunes a viernes, 9:00 a 19:00.",
-    conPlan: "+15%",
   },
   {
     recargo: "+50%",
     titulo: "Fuera de horario y fines de semana",
     detalle: "Lunes a viernes, 19:00 a 23:00. Sábado y domingo, 9:00 a 23:00.",
-    conPlan: "+25%",
   },
   {
     recargo: "+100%",
     titulo: "Nocturno y feriados",
     detalle:
       "Cualquier día de 23:00 a 9:00, y todo el día en feriados. Solo remoto, o en terreno para empresas con plan.",
-    conPlan: "+50%",
     destacado: true,
   },
 ];
@@ -180,8 +181,8 @@ export const SERVICIOS_SOPORTE: ServicioSoporte[] = [
     nombre: "Atención urgente",
     precio: "Recargo según horario",
     unidad: "",
-    diagnostico: "Al aceptar la reparación se descuenta el diagnóstico base; el recargo por urgencia no se abona.",
-    nota: "Con plan para empresas pagas la mitad del recargo. Las visitas urgentes tienen un mínimo de 1 hora.",
+    diagnostico: "Al aceptar la reparación se descuenta el diagnóstico base. Sin plan, el recargo por urgencia se paga completo.",
+    nota: `Con plan para empresas, si aceptas la reparación, la atención urgente te cuesta ${DESCUENTO_URGENCIA_CON_PLAN} menos. Las visitas urgentes tienen un mínimo de 1 hora.`,
     interes: INTERES_URGENCIA,
   },
   ...personas.map((s) => ({ ...s, grupo: "personas" as const, interes: s.nombre })),

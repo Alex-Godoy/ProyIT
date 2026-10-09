@@ -5,6 +5,7 @@ import Encabezado from "@/components/home/encabezado";
 import AgendarDialogo from "@/components/home/agendar";
 import SolicitarServicio, { BotonServicio } from "@/components/soporte/solicitar";
 import {
+  DESCUENTO_URGENCIA_CON_PLAN,
   DIAGNOSTICO_OFICINA,
   EJEMPLOS_URGENCIA,
   PLANES_SOPORTE,
@@ -184,8 +185,9 @@ export default function SoportePage() {
             </p>
             <h2 className={`${tituloSeccion} mt-4`}>¿No puede esperar? Te atendemos hoy, de noche o en feriado</h2>
             <p className={`${bajada} mt-4`}>
-              La atención urgente tiene un recargo sobre el precio normal, según el horario. Si tienes un plan para
-              empresas, pagas solo la mitad del recargo.
+              La atención urgente tiene un recargo sobre el precio normal, según el horario. Sin plan pagas el valor
+              completo; con un plan para empresas, si aceptas la reparación, la atención urgente te cuesta{" "}
+              <strong className="text-titulo">{DESCUENTO_URGENCIA_CON_PLAN} menos</strong>.
             </p>
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
@@ -199,7 +201,9 @@ export default function SoportePage() {
                   <p className="font-display text-3xl font-extrabold tracking-tight">{r.recargo}</p>
                   <p className="font-bold">{r.titulo}</p>
                   <p className={`text-[15px] leading-relaxed ${r.destacado ? "text-white/80" : "text-ink"}`}>{r.detalle}</p>
-                  <p className={`mt-auto pt-1 text-sm ${r.destacado ? "text-white/70" : "text-muted"}`}>Con plan: {r.conPlan}</p>
+                  <p className={`mt-auto pt-1 text-sm ${r.destacado ? "text-white/70" : "text-muted"}`}>
+                    Con plan y reparación: {DESCUENTO_URGENCIA_CON_PLAN} menos
+                  </p>
                 </div>
               ))}
             </div>
@@ -234,7 +238,11 @@ export default function SoportePage() {
 
             <ul className="mt-6 list-disc space-y-1.5 pl-5 text-[15px] leading-relaxed text-ink">
               <li>Los recargos no se suman: si aplican dos, se cobra el más alto.</li>
-              <li>Al aceptar la reparación se descuenta el diagnóstico base; el recargo por urgencia no se abona.</li>
+              <li>
+                Al aceptar la reparación se descuenta el diagnóstico base. Sin plan, el recargo por urgencia se paga
+                completo; con plan, la atención urgente baja {DESCUENTO_URGENCIA_CON_PLAN}.
+              </li>
+              <li>Los valores de la tabla son sin plan.</li>
               <li>Las visitas urgentes tienen un mínimo de 1 hora.</li>
             </ul>
             <BotonServicio servicio="urgencia" className={`${botonUrgente} mt-7`}>

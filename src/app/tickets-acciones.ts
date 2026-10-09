@@ -3,9 +3,10 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { requireAdmin, requireUsuario } from "@/lib/auth";
-import { enviarCorreo, escaparHtml } from "@/lib/correo";
-import { AVISOS_SOPORTE_PARA, PORTAL_URL, destinatarios } from "@/lib/sitio";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { requireUsuario } from "@/lib/auth";
+import { armarAviso, enviarCorreo, type Aviso } from "@/lib/correo";
+import { AVISOS_SOPORTE_PARA, CONTACTO_EMAIL, PORTAL_URL, destinatarios } from "@/lib/sitio";
 import {
   BUCKET_TICKETS,
   ESTADOS_TICKET,
@@ -47,6 +48,148 @@ function volver(b: string, ticketId: string, r: { ok: CodigoOk } | { error: Codi
 }
 
 // ---------------------------------------------------------------------------
+// Avisos por correo. Salen después de responder (after) para no hacer esperar
+// a nadie, y si fallan la acción ya quedó hecha. Los correos de cada aviso los
+// entrega la función destinatarios_aviso_ticket, que valida quién los pide.
+// ---------------------------------------------------------------------------
+
+type Supabase = SupabaseClient;
+
+type ResumenTicket = {
+  id: string;
+  numero: number;
+  asunto: string;
+  prioridad: string;
+  vence_at: string;
+  cliente: string;
+};
+
+const PIE_PORTAL = "No respondas este correo: contesta desde el portal para que quede registrado en el ticket.";
+
+async function resumenTicket(supabase: Supabase, ticketId: string): Promise<ResumenTicket | null> {
+  const { data } = await supabase
+    .from("tickets")
+    .select("id, numero, asunto, prioridad, vence_at, cliente:clientes(nombre, nombre_fantasia)")
+    .eq("id", ticketId)
+    .maybeSingle();
+  if (!data) return null;
+  const c = data.cliente as unknown as { nombre: string; nombre_fantasia: string | null } | null;
+  return { ...data, cliente: c?.nombre_fantasia ?? c?.nombre ?? "Cliente" };
+}
+
+async function correosDe(supabase: Supabase, ticketId: string, evento: "cliente" | "responsable") {
+  const { data } = await supabase.rpc("destinatarios_aviso_ticket", { p_ticket_id: ticketId, p_evento: evento });
+  return ((data ?? []) as string[]).filter(Boolean);
+}
+
+async function enviarAviso(para: string[], asunto: string, aviso: Aviso, idempotencia: string) {
+  if (para.length === 0) return;
+  await enviarCorreo({ para, asunto, ...armarAviso(aviso), idempotencia });
+}
+
+const esUrgente = (prioridad: string) => prioridad === "urgente" || prioridad === "alta";
+
+function prefijo(t: ResumenTicket) {
+  return esUrgente(t.prioridad) ? `${prioridadInfo(t.prioridad).etiqueta.toUpperCase()} · ` : "";
+}
+
+// Al cliente: el equipo le respondió.
+async function avisarRespuestaAlCliente(supabase: Supabase, ticketId: string, mensajeId: string, contenido: string) {
+  const [t, para] = await Promise.all([resumenTicket(supabase, ticketId), correosDe(supabase, ticketId, "cliente")]);
+  if (!t) return;
+  await enviarAviso(
+    para,
+    `Respondimos tu ticket ${numeroTicket(t.numero)}: ${t.asunto}`,
+    {
+      ceja: "Soporte ProyIT",
+      titulo: `Respondimos tu ticket ${numeroTicket(t.numero)}`,
+      parrafos: [`El equipo de ProyIT respondió tu ticket "${t.asunto}".`],
+      cita: { etiqueta: "Respuesta", texto: contenido },
+      boton: { texto: "Ver y responder", url: `${PORTAL_URL}/portal/tickets/${t.id}` },
+      pie: `${PIE_PORTAL} Si no puedes ingresar, escríbenos a ${CONTACTO_EMAIL}.`,
+    },
+    `ticket-respuesta-${mensajeId}`,
+  );
+}
+
+// Al cliente: su ticket espera su respuesta o quedó resuelto.
+async function avisarEstadoAlCliente(supabase: Supabase, ticketId: string, estado: "esperando_cliente" | "resuelto") {
+  const [t, para] = await Promise.all([resumenTicket(supabase, ticketId), correosDe(supabase, ticketId, "cliente")]);
+  if (!t) return;
+  const esperando = estado === "esperando_cliente";
+  await enviarAviso(
+    para,
+    esperando
+      ? `Necesitamos tu respuesta en el ticket ${numeroTicket(t.numero)}`
+      : `Resolvimos tu ticket ${numeroTicket(t.numero)}: ${t.asunto}`,
+    {
+      ceja: "Soporte ProyIT",
+      titulo: esperando ? "Necesitamos tu respuesta" : "Resolvimos tu ticket",
+      parrafos: esperando
+        ? [`Para seguir con tu ticket "${t.asunto}" necesitamos que nos respondas en el portal.`]
+        : [
+            `Marcamos como resuelto tu ticket "${t.asunto}".`,
+            "Si el problema sigue, respóndenos en el mismo ticket y lo reabrimos.",
+          ],
+      boton: { texto: "Ver el ticket", url: `${PORTAL_URL}/portal/tickets/${t.id}` },
+      pie: PIE_PORTAL,
+    },
+    `ticket-estado-${t.id}-${estado}-${Date.now()}`,
+  );
+}
+
+// Al responsable: se le asignó un ticket.
+async function avisarAsignacion(supabase: Supabase, ticketId: string) {
+  const [t, para] = await Promise.all([resumenTicket(supabase, ticketId), correosDe(supabase, ticketId, "responsable")]);
+  if (!t) return;
+  await enviarAviso(
+    para,
+    `${prefijo(t)}Te asignaron el ticket ${numeroTicket(t.numero)}: ${t.asunto} (${t.cliente})`,
+    {
+      ceja: esUrgente(t.prioridad) ? `Ticket ${prioridadInfo(t.prioridad).etiqueta.toLowerCase()} asignado` : "Ticket asignado",
+      titulo: `${numeroTicket(t.numero)} · ${t.asunto}`,
+      parrafos: ["Te asignaron este ticket de soporte."],
+      filas: [
+        ["Cliente", t.cliente],
+        ["Prioridad", prioridadInfo(t.prioridad).etiqueta],
+        ["Responder antes de", formatearPlazo(t.vence_at)],
+      ],
+      boton: { texto: "Abrir el ticket", url: `${PORTAL_URL}/equipo/tickets/${t.id}` },
+      pie: PIE_PORTAL,
+      urgente: esUrgente(t.prioridad),
+    },
+    `ticket-asignado-${t.id}-${Date.now()}`,
+  );
+}
+
+// Al responsable (o al super usuario si no hay): el cliente respondió.
+async function avisarRespuestaDelCliente(supabase: Supabase, ticketId: string, mensajeId: string, contenido: string) {
+  const [t, responsable] = await Promise.all([
+    resumenTicket(supabase, ticketId),
+    correosDe(supabase, ticketId, "responsable"),
+  ]);
+  if (!t) return;
+  const hayResponsable = responsable.length > 0;
+  await enviarAviso(
+    hayResponsable ? responsable : destinatarios(AVISOS_SOPORTE_PARA, process.env.AVISOS_SOPORTE_PARA),
+    `${prefijo(t)}${t.cliente} respondió el ticket ${numeroTicket(t.numero)}: ${t.asunto}`,
+    {
+      ceja: "Respuesta del cliente",
+      titulo: `${numeroTicket(t.numero)} · ${t.asunto}`,
+      parrafos: [`${t.cliente} respondió en el ticket.`],
+      cita: { etiqueta: "Mensaje", texto: contenido },
+      boton: {
+        texto: "Abrir el ticket",
+        url: `${PORTAL_URL}/${hayResponsable ? "equipo" : "admin"}/tickets/${t.id}`,
+      },
+      pie: PIE_PORTAL,
+      urgente: esUrgente(t.prioridad),
+    },
+    `ticket-respuesta-${mensajeId}`,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Crear (cliente; el super usuario también puede registrar uno a nombre de un cliente)
 // ---------------------------------------------------------------------------
 
@@ -64,59 +207,34 @@ type TicketNuevo = {
 };
 
 // Aviso al equipo cuando un cliente abre un ticket: sin esto, el ticket
-// esperaría hasta que alguien entrara al panel. El texto del cliente se
-// escapa antes de ir al HTML; "Responder" le escribe a quien lo abrió.
+// esperaría hasta que alguien entrara al panel. Sin "responder a": contestar
+// por correo sacaría la conversación del ticket (el correo del cliente va en
+// el cuerpo por si hace falta llamarlo o escribirle).
 async function avisarTicketNuevo(t: TicketNuevo) {
-  const para = destinatarios(AVISOS_SOPORTE_PARA, process.env.AVISOS_SOPORTE_PARA);
-  if (para.length === 0) return;
-
+  const urgente = esUrgente(t.prioridad);
   const prioridad = prioridadInfo(t.prioridad);
-  const urgente = t.prioridad === "urgente" || t.prioridad === "alta";
   const plazo = formatearPlazo(t.vence_at);
-  const url = `${PORTAL_URL}/admin/tickets/${t.id}`;
-  const filas: [string, string][] = [
-    ["Cliente", t.cliente],
-    ["Abierto por", t.autorEmail ? `${t.autor} (${t.autorEmail})` : t.autor],
-    ["Prioridad", prioridad.etiqueta],
-    ["Responder antes de", plazo],
-    ["Proyecto", t.proyecto ?? "Soporte general"],
-  ];
-
-  const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#0f1c2e;max-width:560px">
-  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:${urgente ? "#b34700" : "#1f6aa8"}">${urgente ? `Ticket ${escaparHtml(prioridad.etiqueta.toLowerCase())} · responder ${escaparHtml(plazo)}` : "Nuevo ticket de soporte"}</p>
-  <h1 style="margin:0 0 16px;font-size:20px">${numeroTicket(t.numero)} · ${escaparHtml(t.asunto)}</h1>
-  <table style="border-collapse:collapse;width:100%;font-size:14px">${filas
-    .map(
-      ([k, v]) =>
-        `<tr><td style="padding:6px 12px 6px 0;color:#5b6b80;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 0">${escaparHtml(v)}</td></tr>`,
-    )
-    .join("")}</table>
-  <p style="margin:16px 0 4px;color:#5b6b80;font-size:13px">Qué está pasando</p>
-  <p style="margin:0;padding:12px;background:#f4f7fb;border-radius:8px;font-size:14px;white-space:pre-line">${escaparHtml(t.descripcion)}</p>
-  <p style="margin:24px 0"><a href="${escaparHtml(url)}" style="display:inline-block;background:#061e4a;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:bold">Abrir el ticket</a></p>
-  <p style="margin:0;color:#5b6b80;font-size:12px">Responde desde el portal para que quede registrado en el ticket.</p>
-</div>`;
-
-  const texto = [
-    urgente ? `Ticket ${prioridad.etiqueta.toLowerCase()} · responder ${plazo}` : "Nuevo ticket de soporte",
-    "",
-    `${numeroTicket(t.numero)} · ${t.asunto}`,
-    ...filas.map(([k, v]) => `${k}: ${v}`),
-    "",
-    "Qué está pasando:",
-    t.descripcion,
-    "",
-    `Abrir el ticket: ${url}`,
-  ].join("\n");
-
-  await enviarCorreo({
-    para,
-    asunto: `${urgente ? `${prioridad.etiqueta.toUpperCase()} · ` : ""}Ticket ${numeroTicket(t.numero)}: ${t.asunto} (${t.cliente})`,
-    html,
-    texto,
-    responderA: t.autorEmail ?? undefined,
-    idempotencia: `ticket-${t.id}`,
-  });
+  await enviarAviso(
+    destinatarios(AVISOS_SOPORTE_PARA, process.env.AVISOS_SOPORTE_PARA),
+    `${urgente ? `${prioridad.etiqueta.toUpperCase()} · ` : ""}Ticket ${numeroTicket(t.numero)}: ${t.asunto} (${t.cliente})`,
+    {
+      ceja: urgente ? `Ticket ${prioridad.etiqueta.toLowerCase()} · responder ${plazo}` : "Nuevo ticket de soporte",
+      titulo: `${numeroTicket(t.numero)} · ${t.asunto}`,
+      parrafos: [],
+      filas: [
+        ["Cliente", t.cliente],
+        ["Abierto por", t.autorEmail ? `${t.autor} (${t.autorEmail})` : t.autor],
+        ["Prioridad", prioridad.etiqueta],
+        ["Responder antes de", plazo],
+        ["Proyecto", t.proyecto ?? "Soporte general"],
+      ],
+      cita: { etiqueta: "Qué está pasando", texto: t.descripcion },
+      boton: { texto: "Abrir el ticket", url: `${PORTAL_URL}/admin/tickets/${t.id}` },
+      pie: PIE_PORTAL,
+      urgente,
+    },
+    `ticket-${t.id}`,
+  );
 }
 
 export async function crearTicketAction(fd: FormData): Promise<{ id: string } | { error: string }> {
@@ -149,7 +267,7 @@ export async function crearTicketAction(fd: FormData): Promise<{ id: string } | 
   refrescar(data.id);
 
   // Solo avisa los tickets que abre un cliente (los que registra el equipo ya
-  // los conoce quien los creó). Sale después de responder: no lo hace esperar.
+  // los conoce quien los creó).
   if (perfil?.role === "cliente") {
     const [{ data: cliente }, { data: proyecto }] = await Promise.all([
       supabase.from("clientes").select("nombre, nombre_fantasia").eq("id", clienteId).maybeSingle(),
@@ -184,7 +302,7 @@ export async function responderTicketAction(
   contenido: string,
   interno: boolean,
 ): Promise<{ mensajeId: string } | { error: string }> {
-  const { supabase } = await requireUsuario();
+  const { supabase, perfil } = await requireUsuario();
   const limpio = contenido.trim().slice(0, 8000);
   if (!limpio) return { error: "Escribe un mensaje." };
 
@@ -198,6 +316,15 @@ export async function responderTicketAction(
   if (error || !data) return { error: "No pudimos enviar el mensaje." };
 
   refrescar(ticketId);
+
+  // Las notas internas no avisan a nadie: son del equipo para el equipo.
+  if (!interno) {
+    after(() =>
+      perfil?.role === "cliente"
+        ? avisarRespuestaDelCliente(supabase, ticketId, data.id, limpio)
+        : avisarRespuestaAlCliente(supabase, ticketId, data.id, limpio),
+    );
+  }
   return { mensajeId: data.id };
 }
 
@@ -229,31 +356,44 @@ export async function registrarAdjuntosAction(
 }
 
 // ---------------------------------------------------------------------------
-// Gestión (responsable y super usuario)
+// Gestión (responsable y super usuario): responsable, estado y prioridad se
+// guardan juntos con un solo botón, para que ningún cambio quede sin guardar.
 // ---------------------------------------------------------------------------
 
-export async function actualizarTicketAction(b: string, ticketId: string, fd: FormData) {
-  const { supabase } = await requireUsuario();
+export async function gestionarTicketAction(b: string, ticketId: string, fd: FormData) {
+  const { supabase, perfil } = await requireUsuario();
   const estado = texto(fd, "estado", 20);
   const prioridad = texto(fd, "prioridad", 10);
   if (!estado || !ESTADOS_TICKET.some((e) => e.valor === estado)) volver(b, ticketId, { error: "ticket_no_guardado" });
   if (!prioridad || !PRIORIDADES.some((p) => p.valor === prioridad)) volver(b, ticketId, { error: "ticket_no_guardado" });
 
+  const { data: antes } = await supabase
+    .from("tickets")
+    .select("estado, responsable_id")
+    .eq("id", ticketId)
+    .maybeSingle();
+  if (!antes) volver(b, ticketId, { error: "ticket_no_guardado" });
+
+  // Solo el super usuario asigna; el campo no viaja en el formulario del equipo.
+  const cambiaResponsable = perfil?.role === "admin" && fd.has("responsable_id");
+  const responsable = cambiaResponsable ? texto(fd, "responsable_id", 40) : antes.responsable_id;
+
   const { data, error } = await supabase
     .from("tickets")
-    .update({ estado, prioridad })
+    .update(cambiaResponsable ? { estado, prioridad, responsable_id: responsable } : { estado, prioridad })
     .eq("id", ticketId)
     .select("id");
   if (error || !data?.length) volver(b, ticketId, { error: "ticket_no_guardado" });
   refrescar(ticketId);
-  volver(b, ticketId, { ok: "ticket_actualizado" });
-}
 
-export async function asignarResponsableAction(ticketId: string, fd: FormData) {
-  const { supabase } = await requireAdmin();
-  const responsable = texto(fd, "responsable_id", 40);
-  const { error } = await supabase.from("tickets").update({ responsable_id: responsable }).eq("id", ticketId);
-  if (error) volver("/admin/tickets", ticketId, { error: "ticket_no_guardado" });
-  refrescar(ticketId);
-  volver("/admin/tickets", ticketId, { ok: responsable ? "ticket_asignado" : "ticket_sin_responsable" });
+  const nuevoResponsable = cambiaResponsable && responsable && responsable !== antes.responsable_id;
+  const avisarCliente = (estado === "esperando_cliente" || estado === "resuelto") && estado !== antes.estado;
+  after(async () => {
+    if (nuevoResponsable) await avisarAsignacion(supabase, ticketId);
+    if (avisarCliente) await avisarEstadoAlCliente(supabase, ticketId, estado as "esperando_cliente" | "resuelto");
+  });
+
+  if (cambiaResponsable && responsable !== antes.responsable_id)
+    volver(b, ticketId, { ok: responsable ? "ticket_asignado" : "ticket_sin_responsable" });
+  volver(b, ticketId, { ok: "ticket_actualizado" });
 }

@@ -67,3 +67,52 @@ export function escaparHtml(s: string) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+// Plantilla de los avisos de tickets: todo lo variable se escapa aquí, así
+// cada aviso solo arma sus textos.
+export type Aviso = {
+  ceja: string;
+  titulo: string;
+  parrafos: string[];
+  filas?: [string, string][];
+  cita?: { etiqueta: string; texto: string };
+  boton: { texto: string; url: string };
+  pie: string;
+  urgente?: boolean;
+};
+
+export function armarAviso(a: Aviso): { html: string; texto: string } {
+  const e = escaparHtml;
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#0f1c2e;max-width:560px">
+  <p style="margin:0 0 4px;font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;color:${a.urgente ? "#b34700" : "#1f6aa8"}">${e(a.ceja)}</p>
+  <h1 style="margin:0 0 16px;font-size:20px">${e(a.titulo)}</h1>
+  ${a.parrafos.map((p) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.6">${e(p)}</p>`).join("")}
+  ${
+    a.filas?.length
+      ? `<table style="border-collapse:collapse;width:100%;font-size:14px">${a.filas
+          .map(
+            ([k, v]) =>
+              `<tr><td style="padding:6px 12px 6px 0;color:#5b6b80;white-space:nowrap;vertical-align:top">${e(k)}</td><td style="padding:6px 0">${e(v)}</td></tr>`,
+          )
+          .join("")}</table>`
+      : ""
+  }
+  ${a.cita ? `<p style="margin:16px 0 4px;color:#5b6b80;font-size:13px">${e(a.cita.etiqueta)}</p><p style="margin:0;padding:12px;background:#f4f7fb;border-radius:8px;font-size:14px;white-space:pre-line">${e(a.cita.texto)}</p>` : ""}
+  <p style="margin:24px 0"><a href="${e(a.boton.url)}" style="display:inline-block;background:#061e4a;color:#ffffff;text-decoration:none;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:bold">${e(a.boton.texto)}</a></p>
+  <p style="margin:0;color:#5b6b80;font-size:12px">${e(a.pie)}</p>
+</div>`;
+  const texto = [
+    a.ceja,
+    "",
+    a.titulo,
+    "",
+    ...a.parrafos,
+    ...(a.filas?.length ? ["", ...a.filas.map(([k, v]) => `${k}: ${v}`)] : []),
+    ...(a.cita ? ["", `${a.cita.etiqueta}:`, a.cita.texto] : []),
+    "",
+    `${a.boton.texto}: ${a.boton.url}`,
+    "",
+    a.pie,
+  ].join("\n");
+  return { html, texto };
+}

@@ -176,7 +176,9 @@ export function VistaTicket({
       </div>
 
       {/* Lateral */}
-      <aside className="space-y-4">
+      {/* Quien atiende ve primero el panel de gestión en el celular (asignar o
+          cambiar el estado sin bajar por toda la conversación). */}
+      <aside className={`space-y-4 ${panelGestion ? "order-first lg:order-none" : ""}`}>
         {panelGestion}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Detalle</h2>

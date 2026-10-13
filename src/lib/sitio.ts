@@ -38,6 +38,25 @@ export function enlaceWhatsApp(mensaje: string) {
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
 }
 
+// Botones de WhatsApp del sitio: la clave se guarda con cada clic y la
+// etiqueta es lo que se ve en /admin/diagnosticos.
+export const BOTONES_WHATSAPP = {
+  menu: "Menú",
+  "menu-movil": "Menú móvil",
+  hero: "Hero",
+  soporte: "Tarjeta Soporte TI",
+  fundador: "Cupos fundadores",
+  "problema-agente-ia": "Qué resolvemos · Agente de IA",
+  "problema-soporte-ti": "Qué resolvemos · Soporte TI",
+  "problema-automatizacion": "Qué resolvemos · Automatización",
+  "problema-dashboard": "Qué resolvemos · Dashboard",
+  "problema-portal-clientes": "Qué resolvemos · Portal de clientes",
+  "problema-auditoria": "Qué resolvemos · Auditoría de seguridad",
+  cierre: "Cierre",
+  pie: "Pie de página",
+} as const;
+export type BotonWhatsApp = keyof typeof BOTONES_WHATSAPP;
+
 // Planes, urgencias y reparaciones de soporte viven en lib/soporte.ts.
 export { INTERES_URGENCIA, PLANES_SOPORTE, esInteresPlan, interesPlan } from "./soporte";
 

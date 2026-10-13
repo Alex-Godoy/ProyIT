@@ -1,7 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { formatearFechaHora } from "@/lib/proyectos";
-import { ESTADOS_DIAGNOSTICO, HORARIOS, INTERES_URGENCIA, esInteresPlan } from "@/lib/sitio";
+import { BOTONES_WHATSAPP, ESTADOS_DIAGNOSTICO, HORARIOS, INTERES_URGENCIA, esInteresPlan } from "@/lib/sitio";
 import { BotonEnviar, inputClase, labelClase } from "@/components/admin/ui";
+import ContactoWhatsApp from "@/components/admin/contacto-whatsapp";
 import { actualizarDiagnosticoAction } from "@/app/diagnostico-acciones";
 
 export const metadata = { title: "Diagnósticos · Administración ProyIT" };
@@ -10,7 +11,7 @@ type Diagnostico = {
   id: string;
   nombre: string;
   empresa: string | null;
-  email: string;
+  email: string | null;
   telefono: string | null;
   interes: string | null;
   mensaje: string | null;
@@ -18,8 +19,17 @@ type Diagnostico = {
   origen: string | null;
   estado: string;
   notas: string | null;
+  reserva_inicio: string | null;
   created_at: string;
 };
+
+// De dónde llegó: el formulario del home no marca nada; Cal.com y WhatsApp sí.
+const CANAL: Record<string, { etiqueta: string; clase: string }> = {
+  "cal.com": { etiqueta: "Cal.com", clase: "bg-emerald-100 text-emerald-800" },
+  whatsapp: { etiqueta: "WhatsApp", clase: "bg-green-100 text-green-800" },
+};
+
+const DIAS_CLICS = 30;
 
 const COLOR_ESTADO: Record<string, string> = {
   nueva: "bg-brand-orange/10 text-brand-orange-dark",
@@ -33,28 +43,71 @@ const etiquetaHorario = (v: string | null) => HORARIOS.find((h) => h.valor === v
 
 export default async function AdminDiagnosticosPage() {
   const { supabase } = await requireAdmin();
-  const { data } = await supabase
-    .from("solicitudes_diagnostico")
-    .select("id, nombre, empresa, email, telefono, interes, mensaje, horario, origen, estado, notas, created_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
+  const desde = new Date(Date.now() - DIAS_CLICS * 24 * 60 * 60 * 1000).toISOString();
+  const [{ data }, { data: clics }] = await Promise.all([
+    supabase
+      .from("solicitudes_diagnostico")
+      .select("id, nombre, empresa, email, telefono, interes, mensaje, horario, origen, estado, notas, reserva_inicio, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase.from("clics_whatsapp").select("origen").gte("created_at", desde).limit(10000),
+  ]);
   const solicitudes = (data ?? []) as Diagnostico[];
+
+  const clicsPorBoton = new Map<string, number>();
+  for (const c of clics ?? []) clicsPorBoton.set(c.origen, (clicsPorBoton.get(c.origen) ?? 0) + 1);
+  const rankingClics = [...clicsPorBoton].sort((a, b) => b[1] - a[1]);
+  const totalClics = clics?.length ?? 0;
+  const etiquetaBoton = (b: string) => BOTONES_WHATSAPP[b as keyof typeof BOTONES_WHATSAPP] ?? b;
+
   // Las urgencias técnicas van primero: hay que contactarlas el mismo día.
   const esUrgente = (s: Diagnostico) => s.interes === INTERES_URGENCIA;
   const abiertas = solicitudes
     .filter((s) => s.estado === "nueva" || s.estado === "contactada")
     .sort((a, b) => Number(esUrgente(b)) - Number(esUrgente(a)));
-  const cerradas = solicitudes.filter((s) => s.estado === "agendada" || s.estado === "descartada");
+  // Reuniones de Cal.com que aún no ocurren, de la más cercana a la más lejana.
+  const ahora = new Date().toISOString();
+  const esProxima = (s: Diagnostico) => s.estado === "agendada" && !!s.reserva_inicio && s.reserva_inicio >= ahora;
+  const proximas = solicitudes
+    .filter(esProxima)
+    .sort((a, b) => (a.reserva_inicio ?? "").localeCompare(b.reserva_inicio ?? ""));
+  const cerradas = solicitudes.filter((s) => (s.estado === "agendada" && !esProxima(s)) || s.estado === "descartada");
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       <h1 className="text-2xl font-bold text-navy">Solicitudes del sitio</h1>
       <p className="mt-1 max-w-2xl text-muted">
-        Diagnósticos, urgencias técnicas e interés en planes de soporte que llegan desde el home. Contacta a cada
-        persona y registra en qué quedó. Las urgencias aparecen primero.
+        Diagnósticos, urgencias técnicas e interés en planes de soporte que llegan desde el home, las reuniones
+        reservadas en Cal.com y los contactos de WhatsApp. Contacta a cada persona y registra en qué quedó. Las
+        urgencias aparecen primero.
       </p>
 
+      <ContactoWhatsApp />
+
+      <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+        <h2 className="font-semibold text-ink">
+          Clics en WhatsApp · últimos {DIAS_CLICS} días <span className="text-muted">({totalClics})</span>
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Cuántas veces se tocó cada botón de WhatsApp del sitio. Sirve para saber cuál funciona; quién escribió lo
+          registras arriba.
+        </p>
+        {rankingClics.length === 0 ? (
+          <p className="mt-3 text-sm text-muted">Aún no hay clics registrados.</p>
+        ) : (
+          <ul className="mt-3 grid gap-x-8 gap-y-1.5 text-sm sm:grid-cols-2">
+            {rankingClics.map(([boton, n]) => (
+              <li key={boton} className="flex justify-between gap-4 border-b border-slate-100 py-1">
+                <span className="text-ink">{etiquetaBoton(boton)}</span>
+                <span className="font-semibold text-navy">{n}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {[
+        { titulo: "Próximas reuniones", lista: proximas, vacio: "No hay reuniones agendadas en Cal.com." },
         { titulo: "Por gestionar", lista: abiertas, vacio: "No hay solicitudes pendientes." },
         { titulo: "Cerradas", lista: cerradas, vacio: "Aún no hay solicitudes cerradas." },
       ].map((grupo) => (
@@ -81,6 +134,13 @@ export default async function AdminDiagnosticosPage() {
                             Urgente
                           </span>
                         )}
+                        {s.origen && CANAL[s.origen] && (
+                          <span
+                            className={`mr-2 rounded-full px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-wide ${CANAL[s.origen].clase}`}
+                          >
+                            {CANAL[s.origen].etiqueta}
+                          </span>
+                        )}
                         {esInteresPlan(s.interes) && (
                           <span className="mr-2 rounded-full bg-sky-100 px-2 py-0.5 align-middle text-[11px] font-bold uppercase tracking-wide text-sky-800">
                             Plan de soporte
@@ -90,19 +150,26 @@ export default async function AdminDiagnosticosPage() {
                         {s.empresa && <span className="font-normal text-muted"> · {s.empresa}</span>}
                       </p>
                       <p className="mt-0.5 flex flex-wrap gap-x-3 text-sm">
-                        <a href={`mailto:${s.email}`} className="text-brand-blue hover:underline">
-                          {s.email}
-                        </a>
+                        {s.email && (
+                          <a href={`mailto:${s.email}`} className="text-brand-blue hover:underline">
+                            {s.email}
+                          </a>
+                        )}
                         {s.telefono && (
                           <a href={`tel:${s.telefono}`} className="text-brand-blue hover:underline">
                             {s.telefono}
                           </a>
                         )}
                       </p>
+                      {s.reserva_inicio && (
+                        <p className="mt-1 text-sm font-medium text-emerald-800">
+                          Reunión: {formatearFechaHora(s.reserva_inicio)}
+                        </p>
+                      )}
                       <p className="mt-1 text-xs text-muted">
                         Recibida {formatearFechaHora(s.created_at)}
                         {etiquetaHorario(s.horario) && ` · Prefiere: ${etiquetaHorario(s.horario)}`}
-                        {s.origen && ` · Desde: ${s.origen}`}
+                        {s.origen && !CANAL[s.origen] && ` · Desde: ${s.origen}`}
                       </p>
                     </div>
                     <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${COLOR_ESTADO[s.estado] ?? ""}`}>

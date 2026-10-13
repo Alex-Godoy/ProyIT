@@ -293,6 +293,34 @@ export async function solicitarDiagnosticoAction(_prev: EstadoEnvio, fd: FormDat
   return { ok: true };
 }
 
+// Alguien escribió por WhatsApp: el admin lo registra para hacerle seguimiento
+// junto al resto de las solicitudes.
+export async function registrarContactoWhatsAppAction(_prev: EstadoEnvio, fd: FormData): Promise<EstadoEnvio> {
+  const { supabase } = await requireAdmin();
+  const nombre = linea(fd, "nombre", 120);
+  const telefono = linea(fd, "telefono", 40);
+  const email = texto(fd, "email", 200)?.toLowerCase() ?? null;
+  const interes = texto(fd, "interes", 80);
+
+  if (!nombre || nombre.length < 2) return { ok: false, error: "Falta el nombre." };
+  if ((telefono?.replace(/\D/g, "").length ?? 0) < 8) return { ok: false, error: "Revisa el teléfono de WhatsApp." };
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, error: "El correo no parece válido." };
+
+  const { error } = await supabase.from("solicitudes_diagnostico").insert({
+    nombre,
+    telefono,
+    email,
+    empresa: linea(fd, "empresa", 120),
+    interes: interes && [...INTERESES, ...INTERESES_SERVICIO].includes(interes) ? interes : null,
+    mensaje: texto(fd, "mensaje", 2000),
+    origen: "whatsapp",
+  });
+  if (error) return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo." };
+
+  revalidatePath("/admin/diagnosticos");
+  return { ok: true };
+}
+
 export async function actualizarDiagnosticoAction(id: string, fd: FormData) {
   const { supabase } = await requireAdmin();
   const estado = texto(fd, "estado", 20);

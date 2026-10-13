@@ -11,7 +11,8 @@ import fotoAlex from "../../public/home/alex-fundador.jpg";
 import logoNgf from "../../public/home/logo-ngf.png";
 import Encabezado from "@/components/home/encabezado";
 import AgendarDialogo from "@/components/home/agendar";
-import { AGENDA_URL, MENSAJE_WHATSAPP, WHATSAPP_VISIBLE, enlaceWhatsApp } from "@/lib/sitio";
+import EnlaceWhatsApp from "@/components/home/enlace-whatsapp";
+import { AGENDA_URL, MENSAJE_WHATSAPP, WHATSAPP_VISIBLE, type BotonWhatsApp } from "@/lib/sitio";
 
 export const metadata = {
   title: "ProyIT · Tecnología a la medida de tu operación",
@@ -19,9 +20,8 @@ export const metadata = {
     "Lo que hoy haces a mano, en Excel y por WhatsApp, funcionando solo. Partimos con una conversación de 30 minutos, sin costo, y lo construimos a la medida de tu empresa.",
 };
 
-const WA_GENERAL = enlaceWhatsApp(MENSAJE_WHATSAPP);
-const WA_SOPORTE = enlaceWhatsApp("Hola, necesito soporte TI.");
-const WA_FUNDADOR = enlaceWhatsApp("Hola, quiero un cupo fundador para el Agente de IA para WhatsApp.");
+const MENSAJE_SOPORTE = "Hola, necesito soporte TI.";
+const MENSAJE_FUNDADOR = "Hola, quiero un cupo fundador para el Agente de IA para WhatsApp.";
 
 const GARANTIAS = ["Primera conversación sin costo", "Valor acordado antes de empezar", "Piloto activo con NGF"];
 
@@ -93,17 +93,17 @@ const CONSTRUIDO = [
 ];
 
 // Cada problema abre WhatsApp con el mensaje ya armado.
-const PROBLEMAS = [
-  { cita: "Se me pierden consultas de WhatsApp y respondo tarde.", quien: "Pymes con alto volumen de mensajes", solucion: "Agente de IA" },
-  { cita: "Todo mi TI depende de una sola persona.", quien: "Empresas sin equipo de TI", solucion: "Soporte TI" },
-  { cita: "Hacemos a mano lo que debería ser automático.", quien: "Operaciones con Excel y correos", solucion: "Automatización a medida" },
-  { cita: "Tomo decisiones a ciegas, sin mis números al día.", quien: "Negocios en crecimiento", solucion: "Dashboard operacional" },
+const PROBLEMAS: { cita: string; quien: string; solucion: string; boton: BotonWhatsApp }[] = [
+  { cita: "Se me pierden consultas de WhatsApp y respondo tarde.", quien: "Pymes con alto volumen de mensajes", solucion: "Agente de IA", boton: "problema-agente-ia" },
+  { cita: "Todo mi TI depende de una sola persona.", quien: "Empresas sin equipo de TI", solucion: "Soporte TI", boton: "problema-soporte-ti" },
+  { cita: "Hacemos a mano lo que debería ser automático.", quien: "Operaciones con Excel y correos", solucion: "Automatización a medida", boton: "problema-automatizacion" },
+  { cita: "Tomo decisiones a ciegas, sin mis números al día.", quien: "Negocios en crecimiento", solucion: "Dashboard operacional", boton: "problema-dashboard" },
   {
     cita: "Mis clientes no ven todo lo que hago por ellos.",
     quien: "Estudios contables y servicios profesionales",
-    solucion: "Portal de clientes",
+    solucion: "Portal de clientes", boton: "problema-portal-clientes",
   },
-  { cita: "Me preocupa una multa por la Ley 21.719.", quien: "Empresas que manejan datos de clientes", solucion: "Auditoría de seguridad" },
+  { cita: "Me preocupa una multa por la Ley 21.719.", quien: "Empresas que manejan datos de clientes", solucion: "Auditoría de seguridad", boton: "problema-auditoria" },
 ];
 
 const contenedor = "mx-auto max-w-[1120px] px-4 sm:px-6";
@@ -177,9 +177,9 @@ export default function Home() {
                 diagnóstico de alcance cerrado: sabes qué automatizar primero, cuánto cuesta y en cuánto tiempo se paga.
               </p>
               <div className="mt-8 flex flex-wrap gap-3 text-base">
-                <a href={WA_GENERAL} {...externo} className={botonNaranjo}>
+                <EnlaceWhatsApp boton="hero" mensaje={MENSAJE_WHATSAPP} className={botonNaranjo}>
                   Escríbenos por WhatsApp
-                </a>
+                </EnlaceWhatsApp>
                 <a href={AGENDA_URL} {...externo} className={botonContornoClaro}>
                   Agendar conversación
                 </a>
@@ -289,13 +289,13 @@ export default function Home() {
               >
                 Ver planes de Soporte TI
               </Link>
-              <a
-                href={WA_SOPORTE}
-                {...externo}
+              <EnlaceWhatsApp
+                boton="soporte"
+                mensaje={MENSAJE_SOPORTE}
                 className="rounded-full border-2 border-navy px-[22px] py-3.5 text-center font-bold text-navy transition hover:bg-navy hover:text-white"
               >
                 Pedir soporte por WhatsApp
-              </a>
+              </EnlaceWhatsApp>
             </div>
           </div>
         </section>
@@ -385,9 +385,13 @@ export default function Home() {
               </p>
             </div>
             <div className="min-w-0 flex-[1_1_240px]">
-              <a href={WA_FUNDADOR} {...externo} className={`${botonNaranjo} w-full py-[18px] text-[17px]`}>
+              <EnlaceWhatsApp
+                boton="fundador"
+                mensaje={MENSAJE_FUNDADOR}
+                className={`${botonNaranjo} w-full py-[18px] text-[17px]`}
+              >
                 Quiero un cupo
-              </a>
+              </EnlaceWhatsApp>
             </div>
           </div>
         </section>
@@ -405,13 +409,13 @@ export default function Home() {
                 <li key={p.cita} className="flex flex-col gap-2 rounded-2xl border border-linea bg-fondo p-6">
                   <p className="font-display text-xl font-semibold leading-[1.25]">“{p.cita}”</p>
                   <p className="flex-grow text-[15px] text-gris">{p.quien}</p>
-                  <a
-                    href={enlaceWhatsApp(`Hola, vengo del sitio de ProyIT. ${p.cita}`)}
-                    {...externo}
+                  <EnlaceWhatsApp
+                    boton={p.boton}
+                    mensaje={`Hola, vengo del sitio de ProyIT. ${p.cita}`}
                     className="flex min-h-11 items-center text-[15px] font-bold text-navy hover:text-marino hover:underline"
                   >
                     {p.solucion} · escribir por WhatsApp →
-                  </a>
+                  </EnlaceWhatsApp>
                 </li>
               ))}
             </ul>
@@ -476,9 +480,9 @@ export default function Home() {
             diagnóstico. Si no, te lo decimos.
           </p>
           <div className="mt-[30px] flex flex-wrap gap-3 text-base">
-            <a href={WA_GENERAL} {...externo} className={botonNaranjo}>
+            <EnlaceWhatsApp boton="cierre" mensaje={MENSAJE_WHATSAPP} className={botonNaranjo}>
               Escríbenos por WhatsApp
-            </a>
+            </EnlaceWhatsApp>
             <a href={AGENDA_URL} {...externo} className={botonContornoClaro}>
               Agendar conversación
             </a>
@@ -492,9 +496,9 @@ export default function Home() {
               <p>Tecnología cercana, implementada con criterio de negocio · Chile</p>
             </div>
             <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2">
-              <a href={WA_GENERAL} {...externo} className="py-2 underline hover:text-white">
+              <EnlaceWhatsApp boton="pie" mensaje={MENSAJE_WHATSAPP} className="py-2 underline hover:text-white">
                 WhatsApp {WHATSAPP_VISIBLE}
-              </a>
+              </EnlaceWhatsApp>
               <Link href="/privacidad" className="py-2 underline hover:text-white">
                 Privacidad
               </Link>

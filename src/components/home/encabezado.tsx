@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import logoBlanco from "../../../public/brand/proyit-logo-blanco.png";
-import { MENSAJE_WHATSAPP, enlaceWhatsApp } from "@/lib/sitio";
+import { MENSAJE_WHATSAPP } from "@/lib/sitio";
+import EnlaceWhatsApp from "./enlace-whatsapp";
 
 type Seccion = { id: string; label: string; pagina?: string; soloMovil?: boolean };
 
@@ -101,14 +102,13 @@ export default function Encabezado({ sobreFoto = false }: { sobreFoto?: boolean 
             <Link href="/login" className="text-niebla transition hover:text-white">
               Portal clientes
             </Link>
-            <a
-              href={enlaceWhatsApp(MENSAJE_WHATSAPP)}
-              target="_blank"
-              rel="noopener noreferrer"
+            <EnlaceWhatsApp
+              boton="menu"
+              mensaje={MENSAJE_WHATSAPP}
               className="rounded-full bg-brand-orange px-5 py-3 font-bold text-marino transition hover:bg-[#ff8c3a]"
             >
               Escríbenos por WhatsApp
-            </a>
+            </EnlaceWhatsApp>
           </nav>
 
           <button
@@ -146,15 +146,14 @@ export default function Encabezado({ sobreFoto = false }: { sobreFoto?: boolean 
               </Link>
             </li>
           </ul>
-          <a
-            href={enlaceWhatsApp(MENSAJE_WHATSAPP)}
-            target="_blank"
-            rel="noopener noreferrer"
+          <EnlaceWhatsApp
+            boton="menu-movil"
+            mensaje={MENSAJE_WHATSAPP}
             onClick={() => setAbierto(false)}
             className="mt-5 flex w-full items-center justify-center rounded-full bg-brand-orange px-6 py-3.5 font-bold text-marino transition hover:bg-[#ff8c3a]"
           >
             Escríbenos por WhatsApp
-          </a>
+          </EnlaceWhatsApp>
         </nav>
       )}
     </header>

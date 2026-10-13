@@ -1,349 +1,194 @@
 import Image from "next/image";
 import Link from "next/link";
 import logoBlanco from "../../public/brand/proyit-logo-blanco.png";
-import fotoAsesoria from "../../public/home/foto-asesoria.jpg";
-import fotoRevision from "../../public/home/foto-revision.jpg";
-import fotoApreton from "../../public/home/foto-apreton.jpg";
+import fotoHero from "../../public/home/hero-reunion.jpg";
+import fotoObra from "../../public/home/foto-obra.jpg";
+import fotoCierre from "../../public/home/foto-cierre.jpg";
+import fotoPasoDiagnostico from "../../public/home/paso-diagnostico.jpg";
+import fotoPasoConstruccion from "../../public/home/paso-construccion.jpg";
+import fotoPasoPuestaEnMarcha from "../../public/home/paso-puesta-en-marcha.jpg";
+import fotoAlex from "../../public/home/alex-fundador.jpg";
+import logoNgf from "../../public/home/logo-ngf.png";
 import Encabezado from "@/components/home/encabezado";
-import AgendarDialogo, { BotonAgendar, EnlaceAgendar } from "@/components/home/agendar";
-import EnlaceSolucion from "@/components/home/enlace-solucion";
-import {
-  AvatarAutomatizacion,
-  AvatarDatos,
-  AvatarEstudio,
-  AvatarMensajes,
-  AvatarNegocio,
-  AvatarTI,
-  CheckDestacado,
-  CheckHero,
-  CheckSuave,
-  FlechaHero,
-  FlechaSolucion,
-  IconoCosto,
-  IconoMapa,
-  IconoMensajes,
-  IconoNotas,
-  IconoPlanilla,
-  IconoPrimerPaso,
-  IconoPrioridades,
-  IlustracionAgente,
-  IlustracionConSolucion,
-  IlustracionHoy,
-  IlustracionPaso1,
-  IlustracionPaso2,
-  IlustracionPaso3,
-  IlustracionPortal,
-  IlustracionProyContable,
-  IlustracionSoporte,
-  IlustracionTienda,
-  MarcaHoy,
-} from "@/components/home/ilustraciones";
-import { DIAGNOSTICO, PLANES_SOPORTE, WHATSAPP_NUMERO, enlaceWhatsApp, interesPlan } from "@/lib/sitio";
-import { DIAGNOSTICO_OFICINA } from "@/lib/soporte";
+import AgendarDialogo from "@/components/home/agendar";
+import { AGENDA_URL, MENSAJE_WHATSAPP, WHATSAPP_VISIBLE, enlaceWhatsApp } from "@/lib/sitio";
 
 export const metadata = {
   title: "ProyIT · Tecnología a la medida de tu operación",
   description:
-    "Lo que hoy haces a mano, en Excel y por WhatsApp, funcionando solo. Partimos con un diagnóstico a precio fijo y lo construimos a la medida de tu empresa.",
+    "Lo que hoy haces a mano, en Excel y por WhatsApp, funcionando solo. Partimos con una conversación de 30 minutos, sin costo, y lo construimos a la medida de tu empresa.",
 };
 
+const WA_GENERAL = enlaceWhatsApp(MENSAJE_WHATSAPP);
+const WA_SOPORTE = enlaceWhatsApp("Hola, necesito soporte TI.");
+const WA_FUNDADOR = enlaceWhatsApp("Hola, quiero un cupo fundador para el Agente de IA para WhatsApp.");
+
+const GARANTIAS = ["Primera conversación sin costo", "Valor acordado antes de empezar", "Piloto activo con NGF"];
+
 const RECIBES = [
-  { t: "Mapa de tu operación", d: "Dónde se pierde tiempo, plata e información hoy.", icono: <IconoMapa /> },
-  { t: "Tres prioridades ordenadas", d: "Qué resolver primero y qué puede esperar.", icono: <IconoPrioridades /> },
-  { t: "Costo y plazo de cada una", d: "Números cerrados, sin letra chica.", icono: <IconoCosto /> },
-  { t: "Primer paso recomendado", d: "La mejora que se paga más rápido.", icono: <IconoPrimerPaso /> },
+  { t: "Mapa de tu operación", d: "Dónde se pierde tiempo, plata e información hoy." },
+  { t: "Tres prioridades ordenadas", d: "Qué resolver primero y qué puede esperar." },
+  { t: "Costo y plazo de cada una", d: "Números cerrados, sin letra chica." },
+  { t: "Primer paso recomendado", d: "La mejora que se paga más rápido." },
 ];
 
-const HOY_A_MANO = [
-  { t: "Planilla de Excel", d: "Solo una persona la entiende", icono: <IconoPlanilla />, giro: "-rotate-2" },
-  { t: "Pedidos por WhatsApp", d: "Se anotan a mano", icono: <IconoMensajes />, giro: "rotate-[1.5deg]" },
-  { t: "Notas y correos", d: "Sistemas que no conversan", icono: <IconoNotas />, giro: "-rotate-1" },
-];
-
-const FUNCIONANDO_SOLO = [
-  "Cada dato se ingresa una vez",
-  "El cliente recibe respuesta al momento",
-  "Los números del negocio, al día",
-];
-
-const HOY = [
-  "La misma información se digita dos o tres veces.",
-  "Consultas de clientes que se responden tarde o se pierden.",
-  "Los números del negocio llegan a fin de mes, cuando ya es tarde.",
-];
-
-const A_TU_MEDIDA = [
-  "Cada dato se ingresa una vez y llega solo donde se necesita.",
-  "Tus clientes reciben respuesta al momento, a cualquier hora.",
-  "Ves cómo va tu negocio hoy, en una sola pantalla.",
-];
+const SOPORTE = ["Empresas: planes por cantidad de equipos", "Personas: notebooks y PCs", "Atención de urgencias"];
 
 const PASOS = [
   {
-    t: "Diagnóstico",
-    d: "Conversamos con tu equipo y revisamos procesos, sistemas y urgencias. Precio fijo, plan entregado.",
-    ilustracion: <IlustracionPaso1 />,
+    t: "Conversación y diagnóstico",
+    d: "Partimos con 30 minutos sin costo. Si hay algo que mejorar, revisamos procesos, sistemas y urgencias con alcance y valor acordados antes de partir.",
+    foto: fotoPasoDiagnostico,
+    alt: "Reunión de diagnóstico con el equipo de un cliente",
   },
   {
     t: "Construcción a medida",
     d: "Partimos por la prioridad que se paga más rápido. Etapas cortas, con entregables que tu equipo prueba.",
-    ilustracion: <IlustracionPaso2 />,
+    foto: fotoPasoConstruccion,
+    alt: "Desarrollador construyendo una solución con inteligencia artificial",
   },
   {
     t: "Puesta en marcha y soporte",
     d: "Capacitamos a tu gente, medimos resultados y seguimos contigo en la operación.",
-    ilustracion: <IlustracionPaso3 />,
+    foto: fotoPasoPuestaEnMarcha,
+    alt: "Notebook mostrando la planificación de un proyecto en marcha",
   },
 ];
 
-type Solucion = {
-  id: string;
-  nombre: string;
-  estado: string;
-  claseEstado: string;
-  para: string;
-  promesa: string;
-  puntos: [string, string][];
-  adapta: string;
-  interes: string;
-  ilustracion: React.ReactNode;
-};
-
-const SOLUCIONES: Solucion[] = [
+const CONSTRUIDO = [
   {
-    id: "proycontable",
-    nombre: "ProyContable",
-    estado: "En piloto",
-    claseEstado: "bg-durazno text-[#8a3a00]",
-    para: "Para estudios contables y sus clientes pyme",
-    promesa: "Tus clientes ven su situación financiera sin tener que llamarte.",
-    puntos: [
-      ["Semáforo de salud financiera.", "Verde, amarillo o rojo: el cliente entiende cómo está de un vistazo."],
-      ["Reporte de valor entregado.", "Muestra todo lo que el estudio hizo por él cada mes."],
-      ["Portal propio por cliente.", "Cada empresa entra a su espacio, con su información."],
-      ["Datos protegidos.", "Diseñado considerando la Ley 21.719 de datos personales."],
-    ],
-    adapta: "cualquier firma de servicios que necesite mostrar su trabajo a sus clientes.",
-    interes: "ProyContable",
-    ilustracion: <IlustracionProyContable />,
-  },
-  {
-    id: "portal-clientes",
-    nombre: "Portal de clientes",
-    estado: "En producción",
-    claseEstado: "bg-celeste text-acento",
-    para: "Para empresas de servicios con cartera de clientes",
-    promesa: "Un solo lugar donde tu cliente ve cómo va su proyecto y pide ayuda.",
-    puntos: [
-      ["Proyectos y avance.", "Estado, próximo hito y responsable, sin preguntar por correo."],
-      ["Solicitudes de soporte.", "Cada requerimiento queda registrado y con seguimiento."],
-      ["Novedades y comunicados.", "Avisos que llegan a quien corresponde."],
-      ["Programa de beneficios.", "Premia a los clientes que se quedan y recomiendan."],
-    ],
-    adapta: "agencias, constructoras, estudios, mantención y servicios técnicos.",
-    interes: "Portal de clientes",
-    ilustracion: <IlustracionPortal />,
-  },
-  {
-    id: "agente-whatsapp",
     nombre: "Agente de IA para WhatsApp",
-    estado: "En desarrollo",
-    claseEstado: "bg-[#e8ecf2] text-[#33435a]",
-    para: "Para negocios que venden y atienden por mensaje",
+    estado: "Cupos fundadores",
     promesa: "Responde a tus clientes al momento y te avisa cuando hay una venta.",
     puntos: [
-      ["Atención a toda hora.", "Contesta las preguntas frecuentes sin esperar a tu equipo."],
-      ["Calificación de clientes.", "Distingue al que quiere comprar del que solo pregunta."],
-      ["Derivación a una persona.", "Pasa la conversación con el resumen ya hecho."],
-      ["Entrenado con tu negocio.", "Tus productos, precios, horarios y forma de hablar."],
+      "Contesta a toda hora, entrenado con tus productos y precios.",
+      "Distingue al que quiere comprar y te lo pasa con el resumen hecho.",
     ],
-    adapta: "ventas, agendamiento de horas, postventa y cobranza.",
-    interes: "Agente de IA para WhatsApp",
-    ilustracion: <IlustracionAgente />,
+    para: "Para negocios que venden y atienden por mensaje.",
   },
   {
-    id: "sitios-tiendas",
+    nombre: "ProyContable",
+    estado: "En piloto",
+    promesa: "Tus clientes ven su situación financiera sin tener que llamarte.",
+    puntos: [
+      "Semáforo de salud financiera: verde, amarillo o rojo.",
+      "Reporte mensual de todo lo que el estudio hizo por el cliente.",
+    ],
+    para: "Para estudios contables y sus clientes pyme.",
+  },
+  {
+    nombre: "Portal de clientes",
+    estado: "Base propia",
+    promesa: "Un solo lugar donde tu cliente ve cómo va su proyecto y pide ayuda.",
+    puntos: ["Proyectos con estado, próximo hito y responsable.", "Solicitudes de soporte registradas y con seguimiento."],
+    para: "Para empresas de servicios con cartera de clientes.",
+  },
+  {
     nombre: "Sitios y tiendas online",
     estado: "Entregado",
-    claseEstado: "bg-noche text-white",
-    para: "Para negocios que necesitan vender y ser encontrados",
     promesa: "Presencia digital que tu equipo puede administrar sin depender de nadie.",
-    puntos: [
-      ["Sitio corporativo.", "Claro, rápido y pensado para que te contacten."],
-      ["Tienda online.", "Catálogo, carro y medios de pago."],
-      ["Autoadministrable.", "Cambias textos, productos y precios tú mismo."],
-      ["Posicionamiento en buscadores.", "Para que te encuentren cuando buscan lo que vendes."],
-    ],
-    adapta: "catálogos, reservas, cotizadores y portales con acceso privado.",
-    interes: "Sitio o tienda online",
-    ilustracion: <IlustracionTienda />,
+    puntos: ["Sitio corporativo o tienda con carro y medios de pago.", "Autoadministrable y pensado para que te encuentren."],
+    para: "Para negocios que necesitan vender y ser encontrados.",
   },
 ];
 
-// Si la solución tiene tarjeta en "Lo que construimos", el enlace lleva a
-// ella; si no, abre el formulario con el tema ya elegido.
-const PROBLEMAS: { cita: string; quien: string; solucion: string; destino?: string; avatar: React.ReactNode }[] = [
-  {
-    cita: "Se me pierden consultas de WhatsApp y respondo tarde.",
-    quien: "Pymes con alto volumen de mensajes",
-    solucion: "Agente de IA para WhatsApp",
-    destino: "agente-whatsapp",
-    avatar: <AvatarMensajes />,
-  },
+// Cada problema abre WhatsApp con el mensaje ya armado.
+const PROBLEMAS = [
+  { cita: "Se me pierden consultas de WhatsApp y respondo tarde.", quien: "Pymes con alto volumen de mensajes", solucion: "Agente de IA" },
+  { cita: "Todo mi TI depende de una sola persona.", quien: "Empresas sin equipo de TI", solucion: "Soporte TI" },
+  { cita: "Hacemos a mano lo que debería ser automático.", quien: "Operaciones con Excel y correos", solucion: "Automatización a medida" },
+  { cita: "Tomo decisiones a ciegas, sin mis números al día.", quien: "Negocios en crecimiento", solucion: "Dashboard operacional" },
   {
     cita: "Mis clientes no ven todo lo que hago por ellos.",
     quien: "Estudios contables y servicios profesionales",
     solucion: "Portal de clientes",
-    destino: "portal-clientes",
-    avatar: <AvatarEstudio />,
   },
-  {
-    cita: "Tomo decisiones a ciegas, sin mis números al día.",
-    quien: "Negocios en crecimiento",
-    solucion: "Dashboard operacional",
-    avatar: <AvatarNegocio />,
-  },
-  {
-    cita: "Me preocupa una multa por la Ley 21.719.",
-    quien: "Empresas que manejan datos de clientes",
-    solucion: "Auditoría de seguridad",
-    avatar: <AvatarDatos />,
-  },
-  {
-    cita: "Todo mi TI depende de una sola persona.",
-    quien: "Empresas sin equipo de TI",
-    solucion: "Soporte y continuidad",
-    destino: "planes-soporte",
-    avatar: <AvatarTI />,
-  },
-  {
-    cita: "Hacemos a mano lo que debería ser automático.",
-    quien: "Operaciones con Excel y correos",
-    solucion: "Automatización a medida",
-    avatar: <AvatarAutomatizacion />,
-  },
+  { cita: "Me preocupa una multa por la Ley 21.719.", quien: "Empresas que manejan datos de clientes", solucion: "Auditoría de seguridad" },
 ];
 
-const TESTIMONIOS = [
-  { cita: "Crearon nuestro sitio web de forma rápida y eficiente, respondiendo siempre a nuestras consultas.", quien: "Cliente web" },
-  {
-    cita: "Necesitábamos un equipo que entendiera nuestros requerimientos y respondiera a las necesidades del sitio.",
-    quien: "Cliente ecommerce",
-  },
-];
+const contenedor = "mx-auto max-w-[1120px] px-4 sm:px-6";
+const ceja = "text-[13px] font-bold uppercase tracking-[0.12em]";
+const titulo = "font-display font-extrabold tracking-[-0.02em] text-balance";
+const botonNaranjo =
+  "inline-flex items-center justify-center rounded-full bg-brand-orange px-[26px] py-4 font-bold text-marino transition hover:bg-[#ff8c3a]";
+const botonContornoClaro =
+  "inline-flex items-center justify-center rounded-full border-2 border-white/55 px-[22px] py-3.5 font-bold text-white transition hover:border-white hover:bg-white/5";
+const externo = { target: "_blank", rel: "noopener noreferrer" } as const;
 
-// El socio pide ayuda desde el portal; si no ha ingresado, el login lo
-// devuelve aquí después.
-const PEDIR_SOPORTE = "/portal/tickets/nuevo";
-
-const ceja = "text-xs font-bold uppercase tracking-[0.14em] text-brand-orange-text";
-const tituloSeccion =
-  "font-display text-[30px] font-extrabold leading-[1.1] tracking-tight text-titulo text-balance sm:text-4xl lg:text-[44px]";
-const bajada = "text-lg leading-relaxed text-texto-suave";
-const contenedor = "mx-auto max-w-[1180px] px-4 sm:px-6";
-const seccion = "scroll-mt-20 py-20 lg:py-24";
-const elevar = "transition hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(7,49,125,0.18)] motion-reduce:hover:translate-y-0";
-const botonContornoOscuro = `inline-flex items-center justify-center rounded-full border border-noche px-6 py-3 text-sm font-semibold text-noche hover:bg-noche hover:text-white ${elevar}`;
-const tarjetaSolucion = "flex min-h-11 items-center justify-between gap-3 rounded-[14px] bg-surface px-4 py-3 text-left text-titulo transition hover:bg-celeste";
+function Check({ color }: { color: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+    >
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
 
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-x-clip">
-      <Encabezado />
+    <div className="min-h-screen overflow-x-clip bg-fondo text-[17px] leading-[1.6] text-tinta">
+      <Encabezado sobreFoto />
 
       <main>
         {/* Hero */}
-        <section id="inicio" className="bg-noche pb-20 pt-12 text-white sm:pt-14 lg:pb-24">
-          <div className={`${contenedor} flex flex-col gap-14`}>
-            <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
-              <div className="flex flex-col gap-6">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-orange">
-                  Tecnología a la medida de tu operación
-                </p>
-                <h1 className="font-display text-[36px] font-extrabold leading-[1.05] tracking-tight text-balance sm:text-5xl lg:text-[60px]">
-                  Lo que hoy haces a mano, en Excel y por WhatsApp,{" "}
-                  <span className="text-brand-orange">funcionando solo.</span>
-                </h1>
-                <p className="max-w-[540px] text-lg leading-relaxed text-[#c9d4e6]">
-                  Partimos con un diagnóstico a precio fijo. En {DIAGNOSTICO.semanas} semanas sabes qué automatizar
-                  primero, cuánto cuesta y en cuánto tiempo se paga. Después lo construimos a la medida de tu empresa.
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <BotonAgendar origen="hero" className="px-7 py-3.5">
-                    Agendar mi diagnóstico
-                  </BotonAgendar>
-                  <a
-                    href="#como-trabajamos"
-                    className={`inline-flex items-center justify-center rounded-full border border-[#7fa6de] px-7 py-3.5 text-sm font-semibold text-white hover:bg-white/5 ${elevar}`}
-                  >
-                    Ver cómo trabajamos
-                  </a>
-                </div>
-                <p className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#c9d4e6]">
-                  <span>Precio fijo: {DIAGNOSTICO.precio}</span>
-                  <span>Sin compromiso de seguir</span>
-                  <span>El plan es tuyo, lo construyas con nosotros o no</span>
-                </p>
-                {/* Quien llega con algo que falla hoy lo ve sin hacer scroll. */}
-                <a
-                  href="#soporte-ayuda"
-                  className="self-start rounded-full border border-[#a8571f] bg-[#0a3c8f] px-4 py-3 text-sm text-white transition hover:border-brand-orange"
-                >
-                  ¿Se cayó tu notebook o tu sistema? <strong className="font-semibold text-[#ff9a4d]">Soporte urgente →</strong>
+        <section id="inicio" className="relative overflow-hidden bg-marino text-white lg:min-h-[760px]">
+          <Image
+            src={fotoHero}
+            alt=""
+            priority
+            fill
+            sizes="100vw"
+            placeholder="blur"
+            className="object-cover object-[62%_center]"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,31,74,0.97)_0%,rgba(4,31,74,0.9)_38%,rgba(4,31,74,0.45)_72%,rgba(4,31,74,0.2)_100%)]" />
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 600 760"
+            preserveAspectRatio="xMaxYMid slice"
+            className="absolute right-0 top-0 hidden h-full w-[46%] min-w-80 sm:block"
+          >
+            <polygon points="600,0 600,520 250,0" fill="#2f95d3" fillOpacity="0.32" />
+            <polygon points="600,240 600,760 330,760" fill="#ff7a1a" fillOpacity="0.38" />
+            <polygon points="430,140 600,420 600,140" fill="none" stroke="#ffffff" strokeOpacity="0.35" strokeWidth="1.5" />
+            <line x1="180" y1="760" x2="600" y2="60" stroke="#ffffff" strokeOpacity="0.18" strokeWidth="1" />
+            <line x1="220" y1="760" x2="600" y2="126" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="1" />
+          </svg>
+
+          <div className={`${contenedor} relative`}>
+            <div className="max-w-[640px] pb-[150px] pt-[136px] sm:pb-[168px] sm:pt-[180px]">
+              <p className={`${ceja} text-brand-orange`}>Tecnología a la medida de tu operación</p>
+              <h1 className={`${titulo} mb-[22px] mt-[18px] text-[clamp(38px,5.4vw,68px)] leading-[1.03]`}>
+                Lo que hoy haces a mano, en Excel y por WhatsApp,{" "}
+                <span className="text-brand-orange">funcionando solo.</span>
+              </h1>
+              <p className="max-w-[32em] text-[19px] text-niebla sm:text-xl">
+                Partimos con una conversación de 30 minutos, sin costo. Si vemos algo que mejorar, te proponemos un
+                diagnóstico de alcance cerrado: sabes qué automatizar primero, cuánto cuesta y en cuánto tiempo se paga.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3 text-base">
+                <a href={WA_GENERAL} {...externo} className={botonNaranjo}>
+                  Escríbenos por WhatsApp
+                </a>
+                <a href={AGENDA_URL} {...externo} className={botonContornoClaro}>
+                  Agendar conversación
                 </a>
               </div>
-
-              {/* Antes y después */}
-              <div
-                role="img"
-                aria-label="Antes: planilla de Excel, pedidos por WhatsApp y notas a mano. Después: todo registrado y respondido automáticamente en un solo lugar."
-                className="flex flex-col items-stretch gap-5 sm:flex-row sm:items-center"
-              >
-                <div className="flex min-w-0 flex-1 flex-col gap-3.5">
-                  <span className="text-xs font-bold tracking-[0.14em] text-[#d5e4f7]">HOY, A MANO</span>
-                  {HOY_A_MANO.map((h) => (
-                    <div
-                      key={h.t}
-                      className={`${h.giro} flex items-center gap-3 rounded-2xl border border-dashed border-[#9cc4ee] bg-noche-claro px-4 py-3.5`}
-                    >
-                      {h.icono}
-                      <span className="flex flex-col">
-                        <span className="text-[15px] font-semibold text-white">{h.t}</span>
-                        <span className="text-[13px] text-[#d5e4f7]">{h.d}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <span className="mx-auto rotate-90 sm:rotate-0">
-                  <FlechaHero />
-                </span>
-                <div className="flex min-w-0 flex-[1.2] flex-col gap-3 rounded-[22px] bg-white p-5 shadow-[0_24px_48px_rgba(2,20,60,0.35)] sm:p-6">
-                  <span className="self-start rounded-full bg-brand-orange px-2.5 py-1 text-[11px] font-bold tracking-[0.1em] text-noche">
-                    FUNCIONANDO SOLO
-                  </span>
-                  <span className="font-display text-xl font-bold text-noche">Tu operación en una sola pantalla</span>
-                  {FUNCIONANDO_SOLO.map((t) => (
-                    <span key={t} className="flex items-center gap-2.5 rounded-xl bg-surface px-3.5 py-3 text-[15px] font-medium text-noche">
-                      <CheckHero />
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Lo que recibes */}
-            <div className="flex flex-col gap-6 rounded-3xl bg-white p-6 text-ink sm:p-8">
-              <div>
-                <p className={ceja}>Diagnóstico ProyIT</p>
-                <h2 className="mt-1 font-display text-2xl font-bold text-titulo">Lo que recibes</h2>
-              </div>
-              <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {RECIBES.map((r) => (
-                  <li key={r.t} className="flex flex-col gap-2.5 rounded-[18px] bg-surface p-5">
-                    {r.icono}
-                    <h3 className="font-display text-lg font-bold text-titulo">{r.t}</h3>
-                    <p className="text-[15px] text-texto-suave">{r.d}</p>
+              <ul className="mt-[34px] flex flex-wrap gap-x-[26px] gap-y-2.5 text-[14.5px] text-niebla">
+                {GARANTIAS.map((g) => (
+                  <li key={g} className="flex items-center gap-2">
+                    <Check color="#ff9a4d" />
+                    {g}
                   </li>
                 ))}
               </ul>
@@ -351,412 +196,315 @@ export default function Home() {
           </div>
         </section>
 
-        {/* El problema */}
-        <section className={`${seccion} bg-surface`}>
-          <div className={`${contenedor} flex flex-col gap-12`}>
-            <div className="flex max-w-[760px] flex-col gap-4">
-              <p className={ceja}>El problema</p>
-              <h2 className={tituloSeccion}>Tu empresa creció. Tus herramientas siguen siendo las del primer día.</h2>
-              <p className={bajada}>
-                Planillas que solo una persona entiende, pedidos que llegan por WhatsApp y se anotan a mano, sistemas que
-                no conversan entre sí. Funciona, hasta que alguien falta o el volumen sube.
-              </p>
+        {/* Lo que recibes */}
+        <div className={`${contenedor} relative -mt-[104px]`}>
+          <div className="rounded-[22px] bg-white px-6 py-7 shadow-[0_30px_60px_-24px_rgba(4,31,74,0.45)] sm:px-8">
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="font-display text-2xl font-extrabold">Lo que recibes con el diagnóstico</h2>
+              <p className={`${ceja} text-ceja`}>Alcance cerrado · Sin compromiso de seguir</p>
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-5 rounded-3xl border border-[#d9e1ec] bg-white p-6 sm:p-8">
-                <IlustracionHoy />
-                <h3 className="font-display text-[22px] font-bold text-texto-suave">Hoy</h3>
-                <ul className="flex flex-col gap-3 text-texto-suave">
-                  {HOY.map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <MarcaHoy />
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,220px),1fr))] gap-x-7">
+              {RECIBES.map((r, i) => (
+                <li
+                  key={r.t}
+                  className={`border-t-[3px] pb-1 pt-4 ${i === RECIBES.length - 1 ? "border-brand-orange" : "border-navy"}`}
+                >
+                  <h3 className="font-bold">{r.t}</h3>
+                  <p className="text-[15px] text-gris">{r.d}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* El problema */}
+        <section className={`${contenedor} grid gap-14 pb-20 pt-24 lg:grid-cols-[1fr_1.12fr]`}>
+          <div className="relative min-h-[420px] overflow-hidden rounded-[22px]">
+            <Image
+              src={fotoObra}
+              alt="Supervisor de obra revisando información en una tablet"
+              fill
+              sizes="(min-width: 1024px) 480px, 100vw"
+              placeholder="blur"
+              className="object-cover"
+            />
+            <p className="absolute inset-x-5 bottom-5 rounded-[14px] bg-marino/90 px-5 py-4 text-base font-semibold text-white">
+              Tecnología que llega a donde ocurre tu operación: la oficina, la bodega o la obra.
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className={`${ceja} text-ceja`}>El problema</p>
+            <h2 className={`${titulo} mb-3.5 mt-3 text-[clamp(30px,3.6vw,44px)] leading-[1.06]`}>
+              Tu empresa creció. Tus herramientas siguen siendo las del primer día.
+            </h2>
+            <p className="mb-7 text-gris">
+              Planillas que solo una persona entiende, pedidos que llegan por WhatsApp y se anotan a mano, sistemas que
+              no conversan entre sí. Funciona, hasta que alguien falta o el volumen sube.
+            </p>
+            <dl className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1 border-t border-linea py-4 sm:flex-row sm:gap-4">
+                <dt className="shrink-0 text-[13px] font-bold uppercase tracking-[0.08em] text-[#8a4a12] sm:w-[120px]">Hoy</dt>
+                <dd className="text-gris">
+                  La misma información se digita dos o tres veces y las consultas se responden tarde.
+                </dd>
               </div>
-              <div className="flex flex-col gap-5 rounded-3xl border-2 border-acento bg-white p-6 sm:p-8">
-                <IlustracionConSolucion />
-                <h3 className="font-display text-[22px] font-bold text-acento">Con una solución a tu medida</h3>
-                <ul className="flex flex-col gap-3 text-ink">
-                  {A_TU_MEDIDA.map((t) => (
-                    <li key={t} className="flex gap-3">
-                      <CheckSuave />
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="flex flex-col gap-1 border-t border-linea py-4 sm:flex-row sm:gap-4">
+                <dt className="shrink-0 text-[13px] font-bold uppercase tracking-[0.08em] text-navy sm:w-[120px]">
+                  A tu medida
+                </dt>
+                <dd>
+                  Cada dato se ingresa una vez, tus clientes reciben respuesta al momento y ves tu negocio hoy, en una
+                  sola pantalla.
+                </dd>
               </div>
+            </dl>
+          </div>
+        </section>
+
+        {/* Soporte TI: oferta de cierre rápido */}
+        <section id="soporte" className={`${contenedor} scroll-mt-24 pb-[88px]`}>
+          <div className="flex flex-wrap items-center gap-8 rounded-[22px] border-2 border-navy bg-white p-6 sm:p-9">
+            <div className="min-w-0 flex-[999_1_460px]">
+              <p className={`${ceja} text-ceja`}>Soporte TI</p>
+              <h2 className={`${titulo} mb-3 mt-2.5 text-[clamp(28px,3.2vw,38px)] leading-[1.08]`}>
+                ¿Necesitas soporte ya? Partimos esta semana.
+              </h2>
+              <p className="max-w-[36em] text-gris">
+                Planes mensuales para que tu oficina no dependa de una sola persona, y servicio técnico para equipos con
+                diagnóstico que se abona a la reparación.
+              </p>
+              <ul className="mt-[18px] flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
+                {SOPORTE.map((s) => (
+                  <li key={s} className="flex items-center gap-2">
+                    <Check color="#06347a" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-3 text-base">
+              <Link
+                href="/soporte"
+                className="rounded-full bg-navy px-6 py-4 text-center font-bold text-white transition hover:bg-marino"
+              >
+                Ver planes de Soporte TI
+              </Link>
+              <a
+                href={WA_SOPORTE}
+                {...externo}
+                className="rounded-full border-2 border-navy px-[22px] py-3.5 text-center font-bold text-navy transition hover:bg-navy hover:text-white"
+              >
+                Pedir soporte por WhatsApp
+              </a>
             </div>
           </div>
         </section>
 
         {/* Método */}
-        <section id="como-trabajamos" className={seccion}>
-          <div className={`${contenedor} flex flex-col gap-12`}>
-            <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">
-              <div className="flex flex-col gap-4">
-                <p className={ceja}>Método ProyIT</p>
-                <h2 className={tituloSeccion}>Primero entendemos qué te duele. Después proponemos tecnología.</h2>
-              </div>
-              <Image
-                src={fotoAsesoria}
-                alt="Dos personas revisan juntas un documento durante un diagnóstico"
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="aspect-video w-full rounded-3xl object-cover"
-              />
-            </div>
-            <ol className="grid gap-6 md:grid-cols-3">
-              {PASOS.map((p, i) => (
-                <li key={p.t} className="flex flex-col gap-3.5 rounded-3xl bg-surface p-6 sm:p-7">
-                  {p.ilustracion}
-                  <p className={ceja}>Paso {i + 1}</p>
-                  <h3 className="font-display text-[22px] font-bold text-titulo">{p.t}</h3>
-                  <p className="text-texto-suave">{p.d}</p>
-                </li>
-              ))}
+        <section id="como-trabajamos" className="scroll-mt-20 border-y border-linea bg-white">
+          <div className={`${contenedor} py-[88px]`}>
+            <p className={`${ceja} text-ceja`}>Método ProyIT</p>
+            <h2 className={`${titulo} mb-10 mt-3 max-w-[17em] text-[clamp(30px,4vw,48px)] leading-[1.05]`}>
+              Primero entendemos qué te duele. Después proponemos tecnología.
+            </h2>
+            <ol className="flex flex-wrap gap-6">
+              {PASOS.map((p, i) => {
+                const oscuro = i === PASOS.length - 1;
+                return (
+                  <li
+                    key={p.t}
+                    className={`min-w-0 flex-[1_1_260px] rounded-[18px] p-7 ${oscuro ? "bg-marino text-white" : "bg-fondo"}`}
+                  >
+                    <Image
+                      src={p.foto}
+                      alt={p.alt}
+                      sizes="(min-width: 1024px) 330px, 100vw"
+                      placeholder="blur"
+                      className="mb-[22px] h-[190px] w-full rounded-xl object-cover"
+                    />
+                    <p
+                      className={`font-display text-5xl font-extrabold leading-none ${oscuro ? "text-brand-orange" : "text-navy"}`}
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </p>
+                    <h3 className="mb-2 mt-4 font-display text-[23px] font-bold leading-tight">{p.t}</h3>
+                    <p className={`text-base ${oscuro ? "text-niebla" : "text-gris"}`}>{p.d}</p>
+                  </li>
+                );
+              })}
             </ol>
           </div>
         </section>
 
         {/* Lo que ya construimos */}
-        <section id="lo-que-construimos" className={`${seccion} bg-surface`}>
-          <div className={`${contenedor} flex flex-col gap-14`}>
-            <div className="flex max-w-[760px] flex-col gap-4">
-              <p className={ceja}>Lo que ya construimos</p>
-              <h2 className={tituloSeccion}>No partimos de cero. Partimos de lo que ya funciona.</h2>
-              <p className={bajada}>
-                Cada proyecto nuevo se arma sobre una base ya probada y se adapta a tu empresa. Por eso llegas antes a
-                producción y pagas solo por lo que es propio de tu negocio.
-              </p>
-            </div>
-
-            {SOLUCIONES.map((s, i) => (
-              <article
-                key={s.id}
-                id={s.id}
-                className={`grid scroll-mt-24 items-center gap-8 rounded-[28px] bg-white p-6 transition hover:shadow-[0_16px_40px_rgba(7,49,125,0.12)] sm:p-8 lg:grid-cols-2 lg:gap-12`}
-              >
-                <div className={`flex flex-col gap-3.5 ${i % 2 === 1 ? "lg:order-2" : ""}`}>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-display text-[28px] font-extrabold text-titulo">{s.nombre}</h3>
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.1em] ${s.claseEstado}`}>
-                      {s.estado}
-                    </span>
-                  </div>
-                  <p className="text-sm text-texto-suave">{s.para}</p>
-                  <p className="text-[19px] font-semibold text-titulo">{s.promesa}</p>
-                  <ul className="flex flex-col gap-2.5 text-[15px] text-[#33435a]">
-                    {s.puntos.map(([t, d]) => (
-                      <li key={t} className="flex gap-3">
-                        <CheckSuave />
-                        <span>
-                          <strong className="font-semibold">{t}</strong> {d}
-                        </span>
+        <section id="lo-que-construimos" className={`${contenedor} scroll-mt-20 py-[88px]`}>
+          <p className={`${ceja} text-ceja`}>Lo que ya construimos</p>
+          <h2 className={`${titulo} mb-3.5 mt-3 max-w-[17em] text-[clamp(30px,4vw,48px)] leading-[1.05]`}>
+            No partimos de cero. Partimos de lo que ya funciona.
+          </h2>
+          <p className="mb-[38px] max-w-[42em] text-gris">
+            Cada proyecto nuevo se arma sobre una base ya probada y se adapta a tu empresa. Por eso llegas antes a
+            producción y pagas solo por lo que es propio de tu negocio.
+          </p>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,460px),1fr))] gap-6">
+            {CONSTRUIDO.map((c) => (
+              <article key={c.nombre} className="flex flex-col overflow-hidden rounded-[18px] border border-linea bg-white">
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-marino px-6 py-[22px] text-white sm:px-7">
+                  <h3 className="font-display text-[26px] font-bold leading-[1.1]">{c.nombre}</h3>
+                  <span className="rounded-full bg-brand-orange px-3 py-1 text-[12.5px] font-bold uppercase tracking-[0.06em] text-marino">
+                    {c.estado}
+                  </span>
+                </div>
+                <div className="flex flex-grow flex-col gap-3 px-6 pb-[26px] pt-[22px] sm:px-7">
+                  <p className="text-lg font-semibold leading-[1.35]">{c.promesa}</p>
+                  <ul>
+                    {c.puntos.map((p) => (
+                      <li key={p} className="border-t border-linea py-2.5 text-base text-gris">
+                        {p}
                       </li>
                     ))}
                   </ul>
-                  <p className="text-sm text-texto-suave">
-                    <strong className="font-semibold">Se adapta a:</strong> {s.adapta}
-                  </p>
-                  <BotonAgendar
-                    origen={`solucion-${s.id}`}
-                    interes={s.interes}
-                    variante="contornoOscuro"
-                    className="mt-1.5 self-start"
-                  >
-                    Quiero algo así para mi empresa →
-                  </BotonAgendar>
+                  <p className="border-t border-linea pt-3 text-[15px] text-gris">{c.para}</p>
                 </div>
-                <div className={i % 2 === 1 ? "lg:order-1" : ""}>{s.ilustracion}</div>
               </article>
             ))}
           </div>
         </section>
 
-        {/* Soporte */}
-        <section id="soporte" className={seccion}>
-          <div className={`${contenedor} flex flex-col gap-12`}>
-            <div className="grid items-center gap-8 lg:grid-cols-[1fr_minmax(0,440px)] lg:gap-14">
-              <div className="flex flex-col gap-4">
-                <p className={ceja}>Soporte ProyIT</p>
-                <h2 className={tituloSeccion}>Tu tecnología funcionando, sin tener un área de TI.</h2>
-                <p className={bajada}>
-                  Cuando algo falla no hay tiempo para buscar a quién llamar. Con un plan de soporte tienes un equipo que
-                  ya conoce tus equipos y responde en horas, no en días.
-                </p>
-              </div>
-              <IlustracionSoporte />
-            </div>
-
-            {/* Urgencia primero: quien llega apurado desde el home rara vez es socio. */}
-            <div id="soporte-ayuda" className="grid scroll-mt-24 gap-6 md:grid-cols-2">
-              <div className="flex flex-col items-start gap-3 rounded-3xl border border-[#f3c9a4] bg-[#fff4ea] p-6 sm:p-7">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8a3a00]">¿Aún no eres socio?</p>
-                <h3 className="font-display text-[22px] font-bold text-titulo">¿Tienes una urgencia ahora?</h3>
-                <p className="text-[#33435a]">
-                  Igual te ayudamos. Cuéntanos qué pasó y te contactamos lo antes posible. La atención puntual se cotiza
-                  antes de empezar.
-                </p>
-                <BotonAgendar modo="urgencia" origen="soporte" className="mt-2">
-                  Pedir atención urgente
-                </BotonAgendar>
-              </div>
-              <div className="flex flex-col items-start gap-3 rounded-3xl border border-[#d9e1ec] bg-surface p-6 sm:p-7">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-acento">Socios con plan</p>
-                <h3 className="font-display text-[22px] font-bold text-titulo">¿Ya tienes plan de soporte?</h3>
-                <p className="text-[#33435a]">
-                  Pide ayuda desde tu portal: tu solicitud entra con la prioridad de tu plan y ves su avance en línea.
-                </p>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  <Link
-                    href={PEDIR_SOPORTE}
-                    className={`inline-flex items-center justify-center rounded-full bg-noche px-6 py-3 text-sm font-semibold text-white hover:bg-navy ${elevar}`}
-                  >
-                    Pedir soporte
-                  </Link>
-                  <Link href="/login" className={botonContornoOscuro}>
-                    Ingresar al portal
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div id="planes-soporte" className="flex scroll-mt-24 flex-col gap-8">
-              <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
-                <div className="flex max-w-[760px] flex-col gap-2">
-                  <h3 className="font-display text-[30px] font-extrabold text-titulo">Planes de soporte para empresas</h3>
-                  <p className={bajada}>
-                    Con plan, una urgencia es una llamada. Y pagas{" "}
-                    <strong className="text-brand-orange-text">hasta 21% menos</strong> que por cada servicio suelto.
-                  </p>
-                </div>
-                <Link href="/soporte#empresas" className="py-3 font-semibold text-acento hover:text-brand-orange-text">
-                  Comparar planes en detalle →
-                </Link>
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-3">
-                {PLANES_SOPORTE.map((p) => {
-                  const oscuro = p.destacado;
-                  return (
-                    <article
-                      key={p.id}
-                      className={`flex flex-col gap-4 rounded-3xl p-6 transition hover:shadow-[0_16px_40px_rgba(7,49,125,0.12)] sm:p-7 ${
-                        oscuro ? "bg-noche text-white" : "border border-[#d9e1ec] bg-white"
-                      }`}
-                    >
-                      {oscuro && (
-                        <span className="self-start rounded-full bg-brand-orange px-2.5 py-1 text-[11px] font-bold tracking-[0.1em] text-noche">
-                          MÁS ELEGIDO
-                        </span>
-                      )}
-                      <div className="flex flex-col gap-1">
-                        <h4 className={`font-display text-[26px] font-extrabold ${oscuro ? "" : "text-titulo"}`}>{p.nombre}</h4>
-                        <p className={`text-sm ${oscuro ? "text-[#c9d4e6]" : "text-texto-suave"}`}>{p.equipos}</p>
-                      </div>
-                      <p className={`font-display text-[34px] font-extrabold ${oscuro ? "" : "text-titulo"}`}>
-                        {p.precio}{" "}
-                        <span className={`font-sans text-sm font-normal ${oscuro ? "text-[#c9d4e6]" : "text-texto-suave"}`}>
-                          / mes
-                        </span>
-                      </p>
-                      <p
-                        className={`rounded-xl px-3.5 py-2.5 text-sm font-semibold ${
-                          oscuro ? "bg-noche-claro text-white" : "bg-surface text-acento"
-                        }`}
-                      >
-                        {p.respuesta}
-                      </p>
-                      <ul className={`flex flex-grow flex-col gap-2.5 text-[15px] ${oscuro ? "text-[#e3eaf5]" : "text-[#33435a]"}`}>
-                        {p.incluye.map((i) => (
-                          <li key={i} className="flex gap-3">
-                            {oscuro ? <CheckDestacado /> : <CheckSuave />}
-                            <span>{i}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <BotonAgendar
-                        modo="plan"
-                        origen={`plan-${p.id}`}
-                        interes={interesPlan(p)}
-                        variante={oscuro ? "naranjo" : "contornoOscuro"}
-                        className="w-full"
-                      >
-                        Quiero el plan {p.nombre}
-                      </BotonAgendar>
-                    </article>
-                  );
-                })}
-              </div>
-
-              <p className="text-[15px] text-texto-suave">
-                Valores IVA incluido. Partimos con un diagnóstico TI de tu oficina por{" "}
-                <strong className="text-titulo">{DIAGNOSTICO_OFICINA}</strong>, que se descuenta de la primera
-                mensualidad si contratas un plan.
+        {/* Cupos fundadores */}
+        <section className="bg-marino text-white">
+          <div className={`${contenedor} flex flex-wrap items-center gap-8 py-[72px]`}>
+            <div className="min-w-0 flex-[999_1_520px]">
+              <p className={`${ceja} text-brand-orange`}>Cupos fundadores · Agente de IA para WhatsApp</p>
+              <h2 className={`${titulo} mb-3.5 mt-3 text-[clamp(30px,4vw,46px)] leading-[1.05]`}>
+                Buscamos 5 empresas fundadoras.
+              </h2>
+              <p className="max-w-[36em] text-niebla">
+                Implementamos el agente en tu WhatsApp con condiciones preferentes, a cambio de tu testimonio y de
+                acompañarnos en la puesta a punto. Cuando se llenen los cupos, la oferta se cierra.
               </p>
             </div>
-
-            {/* El detalle (urgencias, reparación de equipos y precios) vive en /soporte. */}
-            <div className="flex flex-col gap-4 rounded-3xl bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8 sm:p-7">
-              <div className="flex flex-col gap-1.5">
-                <h3 className="font-display text-xl font-bold text-titulo">
-                  ¿Hay que reparar un notebook o necesitas atención de noche o en feriado?
-                </h3>
-                <p className="text-texto-suave">
-                  Revisa los precios de reparación, los recargos por urgencia y cómo el diagnóstico se descuenta de la
-                  reparación.
-                </p>
-              </div>
-              <Link
-                href="/soporte"
-                className={`inline-flex shrink-0 items-center justify-center rounded-full bg-noche px-6 py-3.5 text-sm font-semibold text-white hover:bg-navy ${elevar}`}
-              >
-                Ver soporte y precios →
-              </Link>
+            <div className="min-w-0 flex-[1_1_240px]">
+              <a href={WA_FUNDADOR} {...externo} className={`${botonNaranjo} w-full py-[18px] text-[17px]`}>
+                Quiero un cupo
+              </a>
             </div>
           </div>
         </section>
 
         {/* Qué resolvemos */}
-        <section id="que-resolvemos" className={`${seccion} bg-surface`}>
-          <div className={`${contenedor} flex flex-col gap-12`}>
-            <div className="flex max-w-[760px] flex-col gap-4">
-              <p className={ceja}>Qué resolvemos</p>
-              <h2 className={tituloSeccion}>¿Cuál de estos problemas te suena?</h2>
-              <p className={bajada}>
-                Cada solución se construye para una empresa en particular. Estos son los dolores con los que más nos
-                encontramos.
-              </p>
-            </div>
-            <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {PROBLEMAS.map((p) => {
-                const contenido = (
-                  <>
-                    <span className="flex flex-col">
-                      <span className="text-[11px] font-bold tracking-[0.1em] text-brand-orange-text">LA SOLUCIÓN</span>
-                      <span className="font-semibold">{p.solucion}</span>
-                    </span>
-                    <FlechaSolucion />
-                  </>
-                );
-                return (
-                  <li key={p.cita} className="flex flex-col gap-4 rounded-[24px_24px_24px_6px] bg-white p-6 sm:p-7">
-                    <p className="flex-grow font-display text-[21px] font-bold leading-tight text-titulo">“{p.cita}”</p>
-                    <div className="flex items-center gap-3">
-                      {p.avatar}
-                      <p className="text-sm text-texto-suave">{p.quien}</p>
-                    </div>
-                    {p.destino ? (
-                      <EnlaceSolucion destino={p.destino} className={tarjetaSolucion}>
-                        {contenido}
-                      </EnlaceSolucion>
-                    ) : (
-                      <EnlaceAgendar interes={p.solucion} className={tarjetaSolucion}>
-                        {contenido}
-                      </EnlaceAgendar>
-                    )}
-                  </li>
-                );
-              })}
+        <section id="que-resolvemos" className="scroll-mt-20 border-b border-linea bg-white">
+          <div className={`${contenedor} py-[88px]`}>
+            <p className={`${ceja} text-ceja`}>Qué resolvemos</p>
+            <h2 className={`${titulo} mb-3.5 mt-3 text-[clamp(30px,4vw,48px)] leading-[1.05]`}>
+              ¿Cuál de estos problemas te suena?
+            </h2>
+            <p className="mb-[30px] max-w-[42em] text-gris">Toca el que te pase y escríbenos: el mensaje ya va armado.</p>
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-5">
+              {PROBLEMAS.map((p) => (
+                <li key={p.cita} className="flex flex-col gap-2 rounded-2xl border border-linea bg-fondo p-6">
+                  <p className="font-display text-xl font-semibold leading-[1.25]">“{p.cita}”</p>
+                  <p className="flex-grow text-[15px] text-gris">{p.quien}</p>
+                  <a
+                    href={enlaceWhatsApp(`Hola, vengo del sitio de ProyIT. ${p.cita}`)}
+                    {...externo}
+                    className="flex min-h-11 items-center text-[15px] font-bold text-navy hover:text-marino hover:underline"
+                  >
+                    {p.solucion} · escribir por WhatsApp →
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </section>
 
-        {/* Clientes */}
-        <section id="clientes" className="scroll-mt-20 py-20 lg:py-[88px]">
-          <div className={`${contenedor} grid items-start gap-10 lg:grid-cols-2 lg:gap-14`}>
-            <div className="flex flex-col gap-4">
-              <p className={ceja}>En operación</p>
-              <h2 className="font-display text-[28px] font-extrabold leading-[1.12] text-titulo text-balance sm:text-[38px]">
-                Piloto activo con NGF Auditoría y Contabilidad
+        {/* Quiénes somos: fundador + NGF */}
+        <section id="quienes-somos" className={`${contenedor} flex scroll-mt-20 flex-wrap gap-12 py-[88px]`}>
+          <div className="flex min-w-0 flex-[1_1_340px] flex-wrap items-start gap-6">
+            <Image
+              src={fotoAlex}
+              alt="Alex, fundador de ProyIT"
+              sizes="160px"
+              placeholder="blur"
+              className="h-[200px] w-40 flex-none rounded-[18px] object-cover object-[center_30%]"
+            />
+            <div className="min-w-0 flex-[1_1_200px]">
+              <p className={`${ceja} text-ceja`}>Fundador y gerente de innovación</p>
+              <h2 className="my-2.5 font-display text-[30px] font-bold leading-[1.12]">
+                Innovación que se mide en tu operación, no en una presentación.
               </h2>
-              <p className={bajada}>
-                Construimos con clientes reales, no en laboratorio. Cada solución parte de un dolor concreto y se mide en
-                la operación diaria.
+              <p className="text-gris">
+                Soy Alex, fundador de ProyIT. La primera conversación la tienes conmigo, y sigo a cargo de tu proyecto
+                hasta que funciona.
               </p>
-              <Image
-                src={fotoRevision}
-                alt="Dos personas revisan informes financieros frente a un notebook"
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="mt-2 aspect-video w-full rounded-[20px] object-cover"
-              />
             </div>
-            <div className="flex flex-col gap-6">
-              {TESTIMONIOS.map((t) => (
-                <figure key={t.quien} className="flex flex-col gap-4 rounded-[24px_24px_24px_6px] bg-surface p-6 sm:p-7">
-                  <blockquote className="font-display text-[21px] font-semibold leading-snug text-titulo">“{t.cita}”</blockquote>
-                  <figcaption className="text-sm text-texto-suave">{t.quien}</figcaption>
-                </figure>
-              ))}
-            </div>
+          </div>
+          <div className="min-w-0 flex-[1_1_340px] rounded-[18px] border border-linea bg-white p-7">
+            <p className={`${ceja} text-ceja`}>En operación</p>
+            <h2 className="my-2.5 font-display text-[28px] font-bold leading-[1.12]">
+              Piloto activo con NGF Auditoría y Contabilidad
+            </h2>
+            <p className="text-gris">
+              Construimos con clientes reales, no en laboratorio. Cada solución parte de un dolor concreto y se mide en
+              la operación diaria.
+            </p>
+            <Image src={logoNgf} alt="NGF Auditoría y Contabilidad" className="mt-[18px] h-24 w-auto" />
           </div>
         </section>
       </main>
 
-      {/* Llamado final + pie */}
-      <footer id="contacto" className="bg-noche pt-20 text-white lg:pt-[88px]">
-        <div className={`${contenedor} grid items-center gap-10 lg:grid-cols-2 lg:gap-14`}>
-          <div className="flex flex-col items-start gap-5">
-            <h2 className="font-display text-[32px] font-extrabold leading-[1.06] tracking-tight text-balance sm:text-5xl lg:text-[52px]">
-              Partamos por entender <span className="text-brand-orange">qué te duele.</span>
-            </h2>
-            <p className="max-w-[520px] text-lg leading-relaxed text-[#c9d4e6]">
-              Agenda una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el
-              diagnóstico. Si no, te lo decimos.
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <BotonAgendar modo="conversacion" origen="cta-final" className="px-7 py-4">
-                Agendar conversación
-              </BotonAgendar>
-              {WHATSAPP_NUMERO && (
-                <a
-                  href={enlaceWhatsApp("Hola ProyIT, quiero conversar sobre una solución para mi empresa.")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center rounded-full border border-white/25 px-7 py-4 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/5"
-                >
-                  Escribir por WhatsApp
-                </a>
-              )}
-            </div>
-          </div>
-          <div className="relative pb-5 pl-5">
-            <div className="absolute bottom-0 left-0 h-[62%] w-[62%] rounded-[28px] bg-brand-orange" aria-hidden="true" />
-            <Image
-              src={fotoApreton}
-              alt="Una asesora y un cliente se dan la mano al terminar una conversación"
-              sizes="(min-width: 1024px) 560px, 100vw"
-              className="relative aspect-[3/2] w-full rounded-[28px] object-cover"
-            />
-          </div>
-        </div>
+      {/* Cierre + pie */}
+      <footer id="contacto" className="relative overflow-hidden bg-marino text-white">
+        <Image src={fotoCierre} alt="" fill sizes="100vw" placeholder="blur" className="object-cover" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,31,74,0.96)_0%,rgba(4,31,74,0.88)_50%,rgba(4,31,74,0.55)_100%)]" />
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 400 500"
+          preserveAspectRatio="xMaxYMax slice"
+          className="absolute bottom-0 right-0 hidden h-full w-[34%] min-w-60 sm:block"
+        >
+          <polygon points="400,120 400,500 120,500" fill="#ff7a1a" fillOpacity="0.3" />
+          <line x1="60" y1="500" x2="400" y2="40" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="1" />
+        </svg>
 
-        <div className="mt-14 border-t border-[#2a55a3]">
-          <div
-            className={`${contenedor} flex flex-col gap-4 py-7 text-sm text-[#c9d4e6] sm:flex-row sm:items-center sm:justify-between`}
-          >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+        <div className={`${contenedor} relative pb-10 pt-[104px]`}>
+          <h2 className={`${titulo} max-w-[13em] text-[clamp(34px,5vw,60px)] leading-[1.03]`}>
+            Partamos por entender qué te duele.
+          </h2>
+          <p className="mt-4 max-w-[36em] text-niebla">
+            Una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el
+            diagnóstico. Si no, te lo decimos.
+          </p>
+          <div className="mt-[30px] flex flex-wrap gap-3 text-base">
+            <a href={WA_GENERAL} {...externo} className={botonNaranjo}>
+              Escríbenos por WhatsApp
+            </a>
+            <a href={AGENDA_URL} {...externo} className={botonContornoClaro}>
+              Agendar conversación
+            </a>
+          </div>
+
+          <div className="mt-24 flex flex-wrap items-center justify-between gap-x-7 gap-y-4 border-t border-white/[0.18] pt-[22px] text-sm text-niebla">
+            <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
               <Link href="/" aria-label="ProyIT, inicio" className="shrink-0">
                 <Image src={logoBlanco} alt="ProyIT" className="h-9 w-auto" />
               </Link>
               <p>Tecnología cercana, implementada con criterio de negocio · Chile</p>
             </div>
-            <p className="flex flex-wrap gap-x-6 gap-y-2">
-              <Link href="/soporte" className="py-2 text-white hover:text-brand-orange">
-                Soporte TI
-              </Link>
-              <Link href="/login" className="py-2 text-white hover:text-brand-orange">
-                Portal clientes
-              </Link>
-              <Link href="/privacidad" className="py-2 text-white hover:text-brand-orange">
+            <div className="flex flex-wrap items-center gap-x-[22px] gap-y-2">
+              <a href={WA_GENERAL} {...externo} className="py-2 underline hover:text-white">
+                WhatsApp {WHATSAPP_VISIBLE}
+              </a>
+              <Link href="/privacidad" className="py-2 underline hover:text-white">
                 Privacidad
               </Link>
-            </p>
+              <span>RUT 77.203.782-1 · Apoquindo 6410, Las Condes</span>
+            </div>
           </div>
         </div>
       </footer>
 
+      {/* Sigue disponible para /#agendar y /#urgencia (enlaces desde el portal). */}
       <AgendarDialogo />
     </div>
   );

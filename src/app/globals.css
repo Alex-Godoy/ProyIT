@@ -20,6 +20,14 @@
   --color-texto-suave: #4a5a70;
   --color-celeste: #ddeefb;
   --color-durazno: #ffe9d6;
+  /* Home público, revisión comercial (v3) */
+  --color-marino: #041f4a;
+  --color-tinta: #0b1f3f;
+  --color-gris: #4d5f7c;
+  --color-linea: #d6e0ee;
+  --color-fondo: #f6f9fd;
+  --color-ceja: #1c6fa8;
+  --color-niebla: #dbe5f3;
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-inter), system-ui, sans-serif;
 }
@@ -36,11 +44,3 @@ body {
   }
 }
 
-/* Resalta la tarjeta a la que se llega desde "Qué resolvemos". */
-@keyframes destacar {
-  0%, 60% { box-shadow: 0 0 0 3px var(--color-brand-orange); }
-  100% { box-shadow: 0 0 0 3px transparent; }
-}
-.destacado {
-  animation: destacar 2.4s ease-out;
-}

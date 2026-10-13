@@ -3,16 +3,15 @@
 
 import { INTERES_URGENCIA, PLANES_SOPORTE, interesPlan } from "./soporte";
 
-export const DIAGNOSTICO = {
-  // Lo que cuesta el diagnóstico, tal como se muestra ("$490.000 + IVA").
-  precio: "[PRECIO]",
-  // Duración del diagnóstico en semanas ("2", "2 a 3").
-  semanas: "[X]",
-};
-
 // Número de WhatsApp comercial en formato internacional sin "+" ni espacios
-// (ej. "56912345678"). Vacío = el botón "Escribir por WhatsApp" no se muestra.
-export const WHATSAPP_NUMERO = "";
+// (ej. "56912345678"), y cómo se muestra en el pie del home.
+export const WHATSAPP_NUMERO = "56942874145";
+export const WHATSAPP_VISIBLE = "+56 9 4287 4145";
+// Mensaje con que parten los botones generales de WhatsApp.
+export const MENSAJE_WHATSAPP = "Hola, vengo del sitio de ProyIT y quiero conversar sobre mi empresa.";
+
+// Agenda pública para la primera conversación de 30 minutos.
+export const AGENDA_URL = "https://cal.com/proyit/30min";
 
 // Correo público de contacto: se ofrece cuando el formulario no se puede
 // enviar (por ejemplo, si falla la verificación de seguridad).

@@ -5,21 +5,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import logoBlanco from "../../../public/brand/proyit-logo-blanco.png";
-import { BotonAgendar } from "./agendar";
+import { MENSAJE_WHATSAPP, enlaceWhatsApp } from "@/lib/sitio";
 
 type Seccion = { id: string; label: string; pagina?: string; soloMovil?: boolean };
 
 const SECCIONES: Seccion[] = [
+  // Soporte tiene página propia (planes, urgencias, reparaciones y precios).
+  { id: "soporte", label: "Soporte TI", pagina: "/soporte" },
   { id: "como-trabajamos", label: "Cómo trabajamos" },
   { id: "lo-que-construimos", label: "Lo que construimos" },
-  // Soporte tiene página propia (planes, urgencias, reparaciones y precios).
-  { id: "soporte", label: "Soporte", pagina: "/soporte" },
   { id: "que-resolvemos", label: "Qué resolvemos" },
-  // En escritorio no cabe junto a "Soporte": queda solo en el menú móvil.
-  { id: "clientes", label: "Clientes", soloMovil: true },
+  // En escritorio no cabe junto al resto: queda solo en el menú móvil.
+  { id: "quienes-somos", label: "Quiénes somos", soloMovil: true },
 ];
 
-export default function Encabezado() {
+// En el home el encabezado va sobre la foto del hero, sin fondo, y lo toma al
+// bajar. En las demás páginas es una franja azul fija arriba.
+export default function Encabezado({ sobreFoto = false }: { sobreFoto?: boolean }) {
   const pathname = usePathname();
   // Fuera del home (p. ej. en /soporte) las secciones llevan de vuelta al home.
   const href = (s: Seccion) => s.pagina ?? (pathname === "/" ? `#${s.id}` : `/#${s.id}`);
@@ -61,52 +63,71 @@ export default function Encabezado() {
     return () => window.removeEventListener("keydown", alTecla);
   }, [abierto]);
 
+  const transparente = sobreFoto && !conSombra && !abierto;
+  const fondo = transparente ? "bg-transparent" : sobreFoto ? "bg-marino" : "bg-noche";
+
   return (
     <header
-      className={`sticky top-0 z-30 bg-noche text-white transition-shadow ${
+      className={`top-0 z-30 text-white transition-[background-color,box-shadow] ${sobreFoto ? "fixed inset-x-0" : "sticky"} ${fondo} ${
         conSombra ? "shadow-lg shadow-black/20" : ""
       }`}
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-6 px-4 py-4 sm:px-6">
-        <Link href="/" aria-label="ProyIT, inicio" className="shrink-0" onClick={() => setAbierto(false)}>
-          <Image src={logoBlanco} alt="ProyIT" priority className="h-7 w-auto sm:h-8" />
-        </Link>
-
-        <nav aria-label="Secciones" className="hidden items-center gap-6 whitespace-nowrap text-sm lg:flex">
-          {SECCIONES.filter((s) => !s.soloMovil).map((s) => (
-            <Link
-              key={s.id}
-              href={href(s)}
-              aria-current={esActiva(s, activa) ? "true" : undefined}
-              className={`transition hover:text-white ${esActiva(s, activa) ? "text-white" : "text-white/80"}`}
-            >
-              {s.label}
-            </Link>
-          ))}
-          <Link href="/login" className="text-white/80 transition hover:text-white">
-            Portal clientes
-          </Link>
-          <BotonAgendar origen="menu" className="whitespace-nowrap px-5 py-2.5">
-            Agendar diagnóstico
-          </BotonAgendar>
-        </nav>
-
-        <button
-          type="button"
-          className="-mr-2 rounded-lg p-2 text-white lg:hidden"
-          aria-expanded={abierto}
-          aria-controls="menu-movil"
-          aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
-          onClick={() => setAbierto((a) => !a)}
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6">
+        <div
+          className={`flex items-center justify-between gap-6 border-b py-3.5 transition-colors sm:py-4 ${
+            transparente ? "border-white/15" : "border-transparent"
+          }`}
         >
-          <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            {abierto ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
-          </svg>
-        </button>
+          <Link
+            href="/"
+            aria-label="ProyIT, inicio"
+            className="flex min-h-11 shrink-0 items-center"
+            onClick={() => setAbierto(false)}
+          >
+            <Image src={logoBlanco} alt="ProyIT" priority className="h-8 w-auto sm:h-10" />
+          </Link>
+
+          <nav aria-label="Secciones" className="hidden items-center gap-6 whitespace-nowrap text-[15px] font-medium xl:flex">
+            {SECCIONES.filter((s) => !s.soloMovil).map((s) => (
+              <Link
+                key={s.id}
+                href={href(s)}
+                aria-current={esActiva(s, activa) ? "true" : undefined}
+                className={`transition hover:text-white ${esActiva(s, activa) ? "text-white" : "text-niebla"}`}
+              >
+                {s.label}
+              </Link>
+            ))}
+            <Link href="/login" className="text-niebla transition hover:text-white">
+              Portal clientes
+            </Link>
+            <a
+              href={enlaceWhatsApp(MENSAJE_WHATSAPP)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-brand-orange px-5 py-3 font-bold text-marino transition hover:bg-[#ff8c3a]"
+            >
+              Escríbenos por WhatsApp
+            </a>
+          </nav>
+
+          <button
+            type="button"
+            className="-mr-2 rounded-lg p-2 text-white xl:hidden"
+            aria-expanded={abierto}
+            aria-controls="menu-movil"
+            aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
+            onClick={() => setAbierto((a) => !a)}
+          >
+            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {abierto ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {abierto && (
-        <nav id="menu-movil" aria-label="Secciones" className="border-t border-white/10 px-4 pb-6 pt-2 sm:px-6 lg:hidden">
+        <nav id="menu-movil" aria-label="Secciones" className="border-t border-white/10 px-4 pb-6 pt-2 sm:px-6 xl:hidden">
           <ul className="flex flex-col">
             {SECCIONES.map((s) => (
               <li key={s.id}>
@@ -125,11 +146,15 @@ export default function Encabezado() {
               </Link>
             </li>
           </ul>
-          <div className="mt-5" onClick={() => setAbierto(false)}>
-            <BotonAgendar origen="menu" className="w-full">
-              Agendar diagnóstico
-            </BotonAgendar>
-          </div>
+          <a
+            href={enlaceWhatsApp(MENSAJE_WHATSAPP)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setAbierto(false)}
+            className="mt-5 flex w-full items-center justify-center rounded-full bg-brand-orange px-6 py-3.5 font-bold text-marino transition hover:bg-[#ff8c3a]"
+          >
+            Escríbenos por WhatsApp
+          </a>
         </nav>
       )}
     </header>

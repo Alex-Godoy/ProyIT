@@ -108,7 +108,7 @@ const CONFIRMACION: Record<Tipo, string> = {
     "Recibimos tu solicitud de soporte urgente. Te contactaremos por teléfono o WhatsApp lo antes posible y, antes de empezar, te diremos cuánto cuesta la atención.",
   plan: "Recibimos tu interés en el plan de soporte. Te contactaremos a la brevedad para revisar tus equipos y activar tu plan.",
   servicio:
-    "Recibimos tu solicitud de servicio técnico. Te escribiremos por WhatsApp para coordinar. Recuerda que el diagnóstico es gratis si aceptas el servicio.",
+    "Recibimos tu solicitud de servicio técnico. Te escribiremos por WhatsApp para coordinar. Recuerda que el diagnóstico es un abono: si aceptas el servicio, se descuenta del total.",
   diagnostico:
     "Te contactaremos a la brevedad para coordinar una primera conversación de 30 minutos, sin costo. Si vemos que podemos ayudarte, te proponemos el diagnóstico. Si no, te lo decimos.",
 };

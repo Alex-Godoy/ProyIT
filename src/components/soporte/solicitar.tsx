@@ -8,9 +8,9 @@ import { solicitarDiagnosticoAction, type EstadoEnvio } from "@/app/diagnostico-
 import { SERVICIOS_SOPORTE, type ServicioSoporte } from "@/lib/soporte";
 import { CONTACTO_EMAIL } from "@/lib/sitio";
 
-// Formulario de /soporte. Usa el mismo flujo que el formulario del home
-// (solicitarDiagnosticoAction): la solicitud llega a "Contactos web" del panel
-// y por correo, con el servicio elegido como tema.
+// Formulario de /soporte (empresas) y /reparaciones (personas). Usa el mismo
+// flujo que el formulario del home (solicitarDiagnosticoAction): la solicitud
+// llega a "Contactos web" del panel y por correo, con el servicio como tema.
 
 const EVENTO = "proyit:servicio";
 
@@ -36,7 +36,9 @@ export function BotonServicio({
   );
 }
 
-const GRUPOS: { grupo: ServicioSoporte["grupo"]; etiqueta: string }[] = [
+type Grupo = ServicioSoporte["grupo"];
+
+const GRUPOS: { grupo: Grupo; etiqueta: string }[] = [
   { grupo: "urgencia", etiqueta: "Urgencias" },
   { grupo: "personas", etiqueta: "Personas · IVA incluido" },
   { grupo: "empresas", etiqueta: "Empresas · IVA incluido" },
@@ -49,8 +51,8 @@ function etiquetaOpcion(s: ServicioSoporte) {
 }
 
 const campo =
-  "w-full rounded-xl border border-slate-300 bg-white px-3.5 py-3 text-base text-ink outline-none transition placeholder:text-slate-400 focus:border-acento focus:ring-2 focus:ring-acento/20";
-const etiqueta = "mb-1.5 block text-sm font-semibold text-titulo";
+  "w-full rounded-xl border border-linea bg-white px-3.5 py-3 text-base text-tinta outline-none transition placeholder:text-slate-400 focus:border-navy focus:ring-2 focus:ring-navy/20";
+const etiqueta = "mb-1.5 block text-sm font-semibold text-tinta";
 
 function BotonEnviar() {
   const { pending } = useFormStatus();
@@ -58,14 +60,23 @@ function BotonEnviar() {
     <button
       type="submit"
       disabled={pending}
-      className="inline-flex w-full items-center justify-center rounded-full bg-noche px-6 py-3.5 text-base font-semibold text-white transition hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      className="inline-flex w-full items-center justify-center rounded-full bg-navy px-7 py-4 text-base font-bold text-white transition hover:bg-marino disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
     >
       {pending ? "Enviando…" : "Enviar solicitud"}
     </button>
   );
 }
 
-export default function SolicitarServicio() {
+export default function SolicitarServicio({
+  grupos,
+  origen,
+  ejemplo,
+}: {
+  grupos: Grupo[];
+  origen: string;
+  ejemplo: string; // placeholder de "Cuéntanos qué pasa"
+}) {
+  const paraEmpresas = grupos.includes("empresas");
   const [servicioId, setServicioId] = useState("");
   const [vez, setVez] = useState(0);
   const [estado, enviar] = useActionState<EstadoEnvio, FormData>(solicitarDiagnosticoAction, null);
@@ -109,16 +120,16 @@ export default function SolicitarServicio() {
     <div className="grid gap-10 lg:grid-cols-[1fr_340px] lg:items-start">
       <div>
         {enviado ? (
-          <div role="status" className="rounded-2xl bg-[#e6f1fb] p-6 sm:p-7">
-            <p className="font-display text-xl font-bold text-titulo sm:text-2xl">¡Gracias! Recibimos tu solicitud.</p>
-            <p className="mt-2 leading-relaxed text-ink">
+          <div role="status" className="rounded-[18px] bg-niebla/60 p-6 sm:p-7">
+            <p className="font-display text-xl font-bold text-tinta sm:text-2xl">¡Gracias! Recibimos tu solicitud.</p>
+            <p className="mt-2 leading-relaxed text-gris">
               {servicio ? `Servicio: ${servicio.nombre}. ` : ""}Te escribiremos por WhatsApp para coordinar. También te
               enviamos una confirmación por correo.
             </p>
             <button
               type="button"
               onClick={otraSolicitud}
-              className="mt-5 inline-flex rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-titulo transition hover:border-noche"
+              className="mt-5 inline-flex rounded-full border-2 border-navy bg-white px-5 py-2.5 text-sm font-bold text-navy transition hover:bg-navy hover:text-white"
             >
               Hacer otra solicitud
             </button>
@@ -135,11 +146,16 @@ export default function SolicitarServicio() {
             }}
             className="space-y-5"
           >
-            <input type="hidden" name="origen" value="pagina-soporte" />
+            <input type="hidden" name="origen" value={origen} />
             <input type="hidden" name="interes" value={servicio?.interes ?? ""} />
             <input type="hidden" name="captcha" value={captchaToken ?? ""} />
-            {/* Campo trampa para bots: oculto a personas y lectores de pantalla. */}
-            <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+            {/* Campo trampa para bots: oculto a personas y lectores de pantalla. El
+                estilo va en línea para que no se vea aunque la hoja de estilos
+                no cargue. */}
+            <div
+              aria-hidden="true"
+              style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+            >
               <label>
                 Sitio web
                 <input type="text" name="sitio_web" tabIndex={-1} autoComplete="off" />
@@ -159,7 +175,7 @@ export default function SolicitarServicio() {
                 className={campo}
               >
                 <option value="">Selecciona un servicio</option>
-                {GRUPOS.map((g) => (
+                {GRUPOS.filter((g) => grupos.includes(g.grupo)).map((g) => (
                   <optgroup key={g.grupo} label={g.etiqueta}>
                     {SERVICIOS_SOPORTE.filter((s) => s.grupo === g.grupo).map((s) => (
                       <option key={s.id} value={s.id}>
@@ -178,6 +194,14 @@ export default function SolicitarServicio() {
                 </label>
                 <input id="sp-nombre" name="nombre" required minLength={2} maxLength={120} autoComplete="name" className={campo} />
               </div>
+              {paraEmpresas && (
+                <div>
+                  <label htmlFor="sp-empresa" className={etiqueta}>
+                    Empresa
+                  </label>
+                  <input id="sp-empresa" name="empresa" maxLength={120} autoComplete="organization" className={campo} />
+                </div>
+              )}
               <div>
                 <label htmlFor="sp-telefono" className={etiqueta}>
                   WhatsApp *
@@ -228,13 +252,13 @@ export default function SolicitarServicio() {
                 name="mensaje"
                 rows={4}
                 maxLength={2000}
-                placeholder="Ej.: mi notebook se apaga solo después de unos minutos"
+                placeholder={ejemplo}
                 className={`${campo} resize-y`}
               />
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 text-[15px] leading-snug text-ink">
-              <input type="checkbox" name="privacidad" required className="mt-0.5 h-5 w-5 shrink-0 accent-[#061e4a]" />
+            <label className="flex cursor-pointer items-start gap-3 text-[15px] leading-snug text-gris">
+              <input type="checkbox" name="privacidad" required className="mt-0.5 h-5 w-5 shrink-0 accent-[#06347a]" />
               <span>
                 Acepto que ProyIT use mis datos solo para responder esta solicitud, según la{" "}
                 <Link href="/privacidad" target="_blank" className="font-medium text-navy underline">
@@ -274,24 +298,24 @@ export default function SolicitarServicio() {
         )}
       </div>
 
-      <aside className="rounded-2xl border border-[#d5dfee] bg-surface p-6 sm:p-7" aria-live="polite">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Tu solicitud</p>
+      <aside className="rounded-[18px] border border-linea bg-white p-6 sm:p-7" aria-live="polite">
+        <p className="text-[13px] font-bold uppercase tracking-[0.12em] text-ceja">Tu solicitud</p>
         {servicio ? (
           <div className="mt-4 space-y-4">
-            <p className="text-lg font-bold leading-snug text-titulo">{servicio.nombre}</p>
-            <p className="flex flex-wrap items-baseline gap-x-2 text-titulo">
+            <p className="text-lg font-bold leading-snug text-tinta">{servicio.nombre}</p>
+            <p className="flex flex-wrap items-baseline gap-x-2 text-tinta">
               <span className="font-display text-3xl font-extrabold tracking-tight">{servicio.precio}</span>
-              {servicio.unidad && <span className="text-sm text-muted">{servicio.unidad}</span>}
+              {servicio.unidad && <span className="text-sm text-gris">{servicio.unidad}</span>}
             </p>
-            <div className="rounded-xl bg-noche p-4 text-white">
-              <p className="font-bold">{servicio.grupo === "urgencia" ? "Cómo se cobra" : "Diagnóstico gratis al aceptar"}</p>
-              <p className="mt-1 text-sm leading-relaxed text-white/80">{servicio.diagnostico}</p>
+            <div className="rounded-xl bg-marino p-4 text-white">
+              <p className="font-bold">{servicio.grupo === "urgencia" ? "Cómo se cobra" : "Cómo se abona el diagnóstico"}</p>
+              <p className="mt-1 text-sm leading-relaxed text-niebla">{servicio.diagnostico}</p>
             </div>
-            <p className="text-sm leading-relaxed text-muted">{servicio.nota}</p>
+            <p className="text-sm leading-relaxed text-gris">{servicio.nota}</p>
           </div>
         ) : (
-          <p className="mt-4 leading-relaxed text-ink">
-            Elige un servicio y aquí verás su precio con IVA incluido y cómo se descuenta el diagnóstico.
+          <p className="mt-4 leading-relaxed text-gris">
+            Elige un servicio y aquí verás su precio con IVA incluido y cómo se abona el diagnóstico.
           </p>
         )}
       </aside>

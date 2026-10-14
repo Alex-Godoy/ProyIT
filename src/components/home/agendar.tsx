@@ -295,7 +295,7 @@ export default function AgendarDialogo() {
               {urgencia && (
                 <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-ink">
                   ¿Quieres que la próxima vez sea más rápido?{" "}
-                  <a href="/soporte#empresas" onClick={cerrar} className="font-semibold text-navy underline">
+                  <a href="/soporte#planes" onClick={cerrar} className="font-semibold text-navy underline">
                     Revisa los planes de soporte
                   </a>
                   : con suscripción tienes tiempo de respuesta garantizado.

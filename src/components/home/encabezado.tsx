@@ -11,11 +11,12 @@ import EnlaceWhatsApp from "./enlace-whatsapp";
 type Seccion = { id: string; label: string; pagina?: string; soloMovil?: boolean };
 
 const SECCIONES: Seccion[] = [
-  // Soporte tiene página propia (planes, urgencias, reparaciones y precios).
-  { id: "soporte", label: "Soporte TI", pagina: "/soporte" },
   { id: "como-trabajamos", label: "Cómo trabajamos" },
   { id: "lo-que-construimos", label: "Lo que construimos" },
   { id: "que-resolvemos", label: "Qué resolvemos" },
+  // Soporte para empresas tiene página propia. La reparación para personas
+  // (/reparaciones) no va en el menú: se enlaza desde /soporte y el pie.
+  { id: "soporte", label: "Soporte TI", pagina: "/soporte" },
   // En escritorio no cabe junto al resto: queda solo en el menú móvil.
   { id: "quienes-somos", label: "Quiénes somos", soloMovil: true },
 ];

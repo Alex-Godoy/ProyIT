@@ -1,6 +1,6 @@
-// Soporte y continuidad TI: planes, urgencias y reparaciones. Precios con IVA
-// incluido, tal como se muestran. Se editan aquí y se reflejan en el home, en
-// /soporte y en el formulario de solicitud.
+// Soporte y continuidad TI (empresas, /soporte) y reparación de equipos
+// (personas, /reparaciones). Precios con IVA incluido, tal como se muestran. Se
+// editan aquí y se reflejan en las dos páginas y en el formulario de solicitud.
 
 export type PlanSoporte = {
   id: "esencial" | "pyme" | "total";
@@ -8,9 +8,9 @@ export type PlanSoporte = {
   precio: string;
   equipos: string;
   separado: string; // lo que costaría sin plan, con el ahorro
-  respuesta: string;
+  respuesta: string; // primer contacto, no solución (ver CONDICIONES_PLANES)
   incluye: string[];
-  destacado?: boolean;
+  recomendado?: boolean;
 };
 
 export const PLANES_SOPORTE: PlanSoporte[] = [
@@ -20,12 +20,8 @@ export const PLANES_SOPORTE: PlanSoporte[] = [
     precio: "$169.990",
     equipos: "Hasta 5 equipos",
     separado: "Por separado: $209.000 · ahorras 18%",
-    respuesta: "Respuesta en 4 horas hábiles",
-    incluye: [
-      "3 horas de soporte remoto al mes",
-      "Mantención preventiva semestral de todos los equipos",
-      "Respuesta en 4 horas hábiles",
-    ],
+    respuesta: "Primer contacto en 4 horas hábiles",
+    incluye: ["3 horas de soporte remoto al mes", "Mantención preventiva semestral de todos los equipos"],
   },
   {
     id: "pyme",
@@ -33,14 +29,13 @@ export const PLANES_SOPORTE: PlanSoporte[] = [
     precio: "$339.990",
     equipos: "Hasta 10 equipos",
     separado: "Por separado: $418.000 · ahorras 18%",
-    respuesta: "Respuesta en 2 horas hábiles",
+    respuesta: "Primer contacto en 2 horas hábiles",
     incluye: [
       "6 horas de soporte al mes, incluida 1 visita",
       "Mantención preventiva semestral de todos los equipos",
       "Respaldos y soporte Microsoft 365 o Google Workspace",
-      "Respuesta en 2 horas hábiles",
     ],
-    destacado: true,
+    recomendado: true,
   },
   {
     id: "total",
@@ -48,12 +43,12 @@ export const PLANES_SOPORTE: PlanSoporte[] = [
     precio: "$659.990",
     equipos: "Hasta 20 equipos",
     separado: "Por separado: $836.000 · ahorras 21%",
-    respuesta: "Respuesta en 1 hora hábil",
+    respuesta: "Primer contacto en 1 hora hábil",
     incluye: [
       "12 horas de soporte al mes, incluidas 2 visitas",
       "Mantención preventiva semestral de todos los equipos",
-      "Todo lo de Pyme, más monitoreo y seguridad",
-      "Informe mensual · respuesta en 1 hora hábil",
+      "Todo lo de Pyme, más revisión mensual de seguridad: actualizaciones, antivirus y accesos",
+      "Informe mensual del estado de tus equipos",
     ],
   },
 ];
@@ -67,35 +62,90 @@ export const PRECIOS_SUELTOS = {
   equipoAdicional: "$29.990",
 };
 
-// Con plan, si acepta la reparación, la atención urgente cuesta este porcentaje
-// menos. Sin plan se paga el valor completo, recargo incluido.
-export const DESCUENTO_URGENCIA_CON_PLAN = "30%";
-
-export const RECARGOS_URGENCIA = [
+// Condiciones de los planes que se publican en /soporte. Son compromisos con
+// el cliente: si cambian, se cambian aquí.
+export const CONDICIONES_PLANES: { t: string; d: string }[] = [
   {
-    recargo: "+30%",
-    titulo: "Urgente en horario hábil",
-    detalle: "Atención el mismo día, con prioridad. Lunes a viernes, 9:00 a 19:00.",
+    t: "Qué cuenta como equipo",
+    d: "Cada notebook o PC de escritorio. Impresoras, router y periféricos se atienden con las horas del plan, sin sumar equipos. Servidores se cotizan aparte.",
   },
   {
-    recargo: "+50%",
-    titulo: "Fuera de horario y fines de semana",
-    detalle: "Lunes a viernes, 19:00 a 23:00. Sábado y domingo, 9:00 a 23:00.",
+    t: "Primer contacto",
+    d: "Es el tiempo en que una persona del equipo toma tu solicitud y te contacta, no el plazo de solución. Corre en horario hábil: lunes a viernes, 9:00 a 19:00.",
   },
   {
-    recargo: "+100%",
-    titulo: "Nocturno y feriados",
-    detalle:
-      "Cualquier día de 23:00 a 9:00, y todo el día en feriados. Solo remoto, o en terreno para empresas con plan.",
-    destacado: true,
+    t: "Horas no usadas",
+    d: "No se acumulan al mes siguiente. La mantención preventiva sí queda agendada aunque no ocupes horas.",
+  },
+  {
+    t: "Visitas en terreno",
+    d: "En la Región Metropolitana. Cada visita descuenta horas del plan desde que llegamos.",
+  },
+  {
+    t: "Permanencia",
+    d: "Sin permanencia mínima. Puedes terminar el plan avisando con 30 días de anticipación.",
+  },
+  {
+    t: `Diagnóstico TI · ${DIAGNOSTICO_OFICINA}`,
+    d: "Revisamos equipos, red, respaldos y cuentas, y te entregamos un informe con riesgos y prioridades. Se abona completo a tu primera mensualidad.",
   },
 ];
 
-// Ejemplos de la tabla de urgencias: [normal, +30%, +50%, +100%].
-export const EJEMPLOS_URGENCIA: { servicio: string; precios: [string, string, string, string] }[] = [
-  { servicio: "Diagnóstico en laboratorio", precios: ["$19.990", "$25.990", "$29.990", "$39.990"] },
-  { servicio: "Diagnóstico a domicilio u oficina", precios: ["$34.990", "$45.490", "$52.490", "$69.990"] },
-  { servicio: "Hora de soporte o visita sin plan", precios: ["$59.990", "$77.990", "$89.990", "$119.990"] },
+// Datos del taller para personas. Se muestran en /reparaciones. Solo se
+// publica la comuna: la recepción es con hora coordinada.
+export const TALLER = {
+  direccion: "Las Condes y Chicureo",
+  recepcion: "Con hora coordinada en Las Condes o Chicureo",
+  envio: "También puedes enviarlo por Chilexpress: te damos los datos al coordinar.",
+  horario: "Lunes a viernes, 9:00 a 19:00",
+  plazo: "24 a 48 horas hábiles",
+  garantia: "30 días",
+};
+
+// ---------------------------------------------------------------------------
+// Urgencias. El recargo se aplica sobre el precio normal según el horario; con
+// un plan para empresas el recargo es menor y se calcula sobre la hora con plan.
+// Si aplican dos recargos, se cobra el más alto. Los horarios siguen la
+// capacidad real del equipo: de noche no hay turno, así que no se vende.
+// ---------------------------------------------------------------------------
+
+export const RECARGOS_URGENCIA = [
+  { horario: "Urgente en horario hábil", cuando: "Mismo día, con prioridad. Lunes a viernes, 9:00 a 19:00.", sinPlan: 30, conPlan: 15 },
+  {
+    horario: "Fuera de horario y sábados",
+    cuando: "Lunes a viernes, 19:00 a 22:00. Sábados, 10:00 a 18:00.",
+    sinPlan: 50,
+    conPlan: 25,
+  },
+  {
+    horario: "Domingos y feriados",
+    cuando: "10:00 a 18:00. Solo atención remota.",
+    sinPlan: 100,
+    conPlan: 50,
+  },
+];
+
+export const SIN_ATENCION =
+  "De 22:00 a 9:00, y los fines de semana fuera de esos horarios, no atendemos. Puedes escribirnos igual por WhatsApp: nuestro asistente recibe tu solicitud y te contactamos al comenzar el siguiente horario de atención.";
+
+export function clp(n: number) {
+  return `$${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+}
+
+// Precio con recargo, redondeado a la decena (como se publica).
+export const conRecargo = (base: number, pct: number) => Math.round((base * (100 + pct)) / 1000) * 10;
+
+export type EjemploUrgencia = { servicio: string; base: number; conPlan?: boolean };
+
+export const URGENCIA_PERSONAS: EjemploUrgencia[] = [
+  { servicio: "Diagnóstico en taller", base: 19990 },
+  { servicio: "Diagnóstico a domicilio u oficina", base: 34990 },
+  { servicio: "Asistencia remota", base: 19990 },
+];
+
+export const URGENCIA_EMPRESAS: EjemploUrgencia[] = [
+  { servicio: "Hora de soporte o visita, sin plan", base: 59990 },
+  { servicio: "Hora adicional, con plan", base: 39990, conPlan: true },
 ];
 
 export const REPARACIONES: { servicio: string; incluye: string; precio: string; antes?: string; despues?: string }[] = [
@@ -108,19 +158,52 @@ export const REPARACIONES: { servicio: string; incluye: string; precio: string; 
   { servicio: "Asistencia remota", incluye: "Configuraciones y problemas de software, sin moverte", precio: "$19.990" },
 ];
 
-export const PREGUNTAS_SOPORTE = [
+// Cómo tratamos los datos de los equipos que nos entregan (Ley 21.719).
+export const PROTOCOLO_DATOS = [
+  { t: "Acceso mínimo", d: "Entramos solo a lo necesario para la reparación. No abrimos tus documentos, fotos ni correos." },
+  { t: "Respaldo antes de tocar", d: "Antes de formatear o cambiar un disco, respaldamos tus archivos y te confirmamos qué se respaldó." },
+  { t: "Borrado al entregar", d: "Los respaldos temporales se eliminan cuando recibes tu equipo conforme." },
+  { t: "Registro de cada paso", d: "Queda anotado quién recibió el equipo, qué se hizo y cuándo se entregó." },
+];
+
+export const PREGUNTAS_EMPRESAS = [
+  {
+    p: "¿Qué pasa si se cae el correo o un equipo deja de partir?",
+    r: "Nos escribes o abres un ticket en tu Portal. Te contactamos dentro del plazo de tu plan y, si hace falta, vamos a tu oficina.",
+  },
+  {
+    p: "¿Tengo que tener una persona de TI?",
+    r: "No. El plan existe justamente para que tu oficina no dependa de una sola persona. Conocemos tus equipos, cuentas y respaldos.",
+  },
+  {
+    p: "¿Y si tengo más equipos que los del plan?",
+    r: `Cada equipo adicional cuesta ${PRECIOS_SUELTOS.equipoAdicional} al mes. Si superas los 20, armamos un plan a tu medida.`,
+  },
+  {
+    p: "¿Puedo partir solo con el diagnóstico?",
+    r: `Sí. El diagnóstico TI de oficina cuesta ${DIAGNOSTICO_OFICINA} y te deja un informe con riesgos y prioridades. Si después contratas un plan, se abona a tu primera mensualidad.`,
+  },
+];
+
+export const PREGUNTAS_PERSONAS = [
   { p: "¿Y si no acepto el presupuesto?", r: "Pagas solo el diagnóstico y te entregamos el equipo con un informe de la falla." },
-  { p: "¿Cuánto demora el diagnóstico?", r: "Entre 24 y 48 horas hábiles desde que recibimos el equipo." },
+  { p: "¿Cuánto demora el diagnóstico?", r: `Entre ${TALLER.plazo} desde que recibimos el equipo.` },
   { p: "¿Los repuestos están incluidos?", r: "No. Los cotizamos aparte en el presupuesto, con su precio a la vista." },
+  { p: "¿Qué garantía tiene la reparación?", r: `${TALLER.garantia} sobre el trabajo realizado y los repuestos que instalamos.` },
   {
     p: "¿Mis archivos están seguros?",
-    r: "Solo accedemos a lo necesario para la reparación y respaldamos antes de cualquier formateo.",
+    r: "Sí. Seguimos un protocolo de acceso mínimo, respaldo y borrado al entregar, pensado para cumplir la Ley 21.719 de protección de datos.",
+  },
+  {
+    p: "¿Dónde dejo mi equipo?",
+    r: `${TALLER.recepcion}, ${TALLER.horario.toLowerCase()}. ${TALLER.envio} También podemos ir a tu casa u oficina.`,
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Servicios que se pueden pedir desde el formulario de /soporte. `interes` es
-// el tema con que la solicitud llega al panel (Contactos web) y a los correos.
+// Servicios que se pueden pedir desde los formularios de /soporte y
+// /reparaciones. `interes` es el tema con que la solicitud llega al panel
+// (Contactos web) y a los correos.
 // ---------------------------------------------------------------------------
 
 export const INTERES_URGENCIA = "Urgencia técnica";
@@ -133,29 +216,29 @@ export type ServicioSoporte = {
   nombre: string;
   precio: string;
   unidad: string;
-  diagnostico: string; // cómo se descuenta el diagnóstico
+  diagnostico: string; // cómo se abona el diagnóstico
   nota: string;
   interes: string;
 };
 
-const REVISION = "Revisamos tu equipo antes de trabajar. Si aceptas el servicio, la revisión no se cobra.";
-const CON_PLAN = `El diagnóstico TI de tu oficina (${DIAGNOSTICO_OFICINA}) es gratis si contratas el plan.`;
+const REVISION = "Revisamos tu equipo antes de trabajar. Si aceptas el servicio, la revisión no se cobra aparte.";
+const CON_PLAN = `El diagnóstico TI de tu oficina (${DIAGNOSTICO_OFICINA}) se abona a tu primera mensualidad.`;
 
 const personas: Omit<ServicioSoporte, "grupo" | "interes">[] = [
   {
     id: "diag-taller",
-    nombre: "Diagnóstico en laboratorio",
+    nombre: "Diagnóstico en taller",
     precio: "$19.990",
     unidad: "IVA incluido",
-    diagnostico: "Si aceptas la reparación, estos $19.990 se descuentan completos.",
-    nota: "Presupuesto en 24 a 48 horas hábiles. Si no aceptas, pagas solo la revisión.",
+    diagnostico: "Es un abono: si aceptas la reparación, estos $19.990 se descuentan del total.",
+    nota: `Presupuesto en ${TALLER.plazo}. Si no aceptas, pagas solo la revisión.`,
   },
   {
     id: "diag-domicilio",
     nombre: "Diagnóstico a domicilio u oficina",
     precio: "$34.990",
     unidad: "IVA incluido",
-    diagnostico: "Si aceptas la reparación, estos $34.990 se descuentan completos.",
+    diagnostico: "Es un abono: si aceptas la reparación, estos $34.990 se descuentan del total.",
     nota: "Disponible en la Región Metropolitana.",
   },
   { id: "formateo", nombre: "Formateo con respaldo", precio: "$39.990", unidad: "IVA incluido", diagnostico: REVISION, nota: "Incluye Windows, programas básicos y tus archivos de vuelta." },
@@ -174,6 +257,8 @@ const personas: Omit<ServicioSoporte, "grupo" | "interes">[] = [
   },
 ];
 
+const recargos = (clave: "sinPlan" | "conPlan") => RECARGOS_URGENCIA.map((r) => `+${r[clave]}%`).join(", ");
+
 export const SERVICIOS_SOPORTE: ServicioSoporte[] = [
   {
     id: "urgencia",
@@ -181,8 +266,8 @@ export const SERVICIOS_SOPORTE: ServicioSoporte[] = [
     nombre: "Atención urgente",
     precio: "Recargo según horario",
     unidad: "",
-    diagnostico: "Al aceptar la reparación se descuenta el diagnóstico base. Sin plan, el recargo por urgencia se paga completo.",
-    nota: `Con plan para empresas, si aceptas la reparación, la atención urgente te cuesta ${DESCUENTO_URGENCIA_CON_PLAN} menos. Las visitas urgentes tienen un mínimo de 1 hora.`,
+    diagnostico: `Sin plan: ${recargos("sinPlan")} sobre el precio normal. Con plan para empresas: ${recargos("conPlan")} sobre la hora con plan.`,
+    nota: "Antes de empezar te decimos cuánto cuesta. Las visitas urgentes tienen un mínimo de 1 hora.",
     interes: INTERES_URGENCIA,
   },
   ...personas.map((s) => ({ ...s, grupo: "personas" as const, interes: s.nombre })),
@@ -192,8 +277,8 @@ export const SERVICIOS_SOPORTE: ServicioSoporte[] = [
     nombre: "Diagnóstico TI de oficina",
     precio: DIAGNOSTICO_OFICINA,
     unidad: "IVA incluido",
-    diagnostico: "Se descuenta completo de tu primera mensualidad si contratas un plan.",
-    nota: "Revisamos equipos, red, respaldos y cuentas de tu equipo.",
+    diagnostico: "Se abona completo a tu primera mensualidad si contratas un plan.",
+    nota: "Revisamos equipos, red, respaldos y cuentas, y te entregamos un informe con riesgos y prioridades.",
     interes: "Diagnóstico TI de oficina",
   },
   ...PLANES_SOPORTE.map((p) => ({
@@ -203,7 +288,7 @@ export const SERVICIOS_SOPORTE: ServicioSoporte[] = [
     precio: p.precio,
     unidad: "/ mes · IVA incluido",
     diagnostico: CON_PLAN,
-    nota: `${p.separado.replace(" · ahorras", " al mes. Ahorras")}.`,
+    nota: `${p.respuesta}. ${p.separado.replace(" · ahorras", " al mes. Ahorras")}.`,
     interes: interesPlan(p),
   })),
 ];

@@ -54,6 +54,9 @@ export const BOTONES_WHATSAPP = {
   "problema-auditoria": "Qué resolvemos · Auditoría de seguridad",
   cierre: "Cierre",
   pie: "Pie de página",
+  "soporte-empresas": "Soporte TI · empresas",
+  "soporte-datos": "Soporte TI · protección de datos",
+  reparaciones: "Reparaciones · personas",
 } as const;
 export type BotonWhatsApp = keyof typeof BOTONES_WHATSAPP;
 

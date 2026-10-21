@@ -20,13 +20,13 @@ export default async function AceptarPrivacidadPage({
   const esActualizacion = !!perfil?.privacidad_version;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
+    <div className="flex min-h-screen items-center justify-center bg-fondo px-4 py-10">
       <div className="w-full max-w-lg">
         <div className="mb-6">
           <Logo />
         </div>
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-          <h1 className="text-2xl font-bold text-navy">
+        <div className="rounded-[18px] bg-white p-6 shadow-sm ring-1 ring-linea sm:p-8">
+          <h1 className="font-display text-[28px] font-extrabold leading-tight tracking-[-0.02em] text-tinta">
             {esActualizacion ? "Actualizamos nuestra Política de Privacidad" : "Antes de continuar"}
           </h1>
           <p className="mt-2 text-muted">
@@ -54,7 +54,7 @@ export default async function AceptarPrivacidadPage({
 
           <p className="mt-6 text-sm text-muted">
             Lee el detalle completo en la{" "}
-            <Link href="/privacidad" target="_blank" className="font-semibold text-brand-blue hover:underline">
+            <Link href="/privacidad" target="_blank" className="font-semibold text-acento hover:underline">
               Política de Privacidad
             </Link>
             .

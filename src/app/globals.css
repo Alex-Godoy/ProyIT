@@ -9,9 +9,10 @@
   /* Naranjo para fondos con texto blanco: 5,5:1 de contraste (el de marca da 2,6:1). */
   --color-brand-orange-text: #b34700;
   --color-brand-orange-text-dark: #8f3900;
-  --color-ink: #0f1c2e;
-  --color-muted: #5b6b80;
-  --color-surface: #f4f7fb;
+  /* Mismos valores que tinta, gris y fondo del home: el portal comparte su paleta. */
+  --color-ink: #0b1f3f;
+  --color-muted: #4d5f7c;
+  --color-surface: #f6f9fd;
   /* Home público: paleta tomada del logo (mockup proyit-diseno) */
   --color-noche: #07317d;
   --color-noche-claro: #1450a8;

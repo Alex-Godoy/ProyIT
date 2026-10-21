@@ -1,6 +1,7 @@
 import { requireEquipo } from "@/lib/auth";
 import { COLUMNAS_TICKET, ESTADOS_ABIERTOS } from "@/lib/tickets";
 import ListaTickets, { type FilaTicket } from "@/components/tickets/lista";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export const metadata = { title: "Mis tickets · ProyIT" };
 
@@ -17,19 +18,25 @@ export default async function EquipoTicketsPage() {
   const cerrados = tickets.filter((t) => !ESTADOS_ABIERTOS.includes(t.estado));
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
-      <h1 className="text-2xl font-bold text-navy sm:text-3xl">Mis tickets</h1>
-      <p className="mt-1 text-muted">Tickets de soporte que te asignaron, ordenados por plazo de respuesta.</p>
+    <main>
+      <CabeceraPagina
+        ancho="medio"
+        cejaTexto="Soporte"
+        bajada="Tickets de soporte que te asignaron, ordenados por plazo de respuesta."
+      >
+        Mis tickets
+      </CabeceraPagina>
+      <CuerpoPagina ancho="medio">
+        <h2 className="mt-8 font-display text-xl font-bold text-tinta">Por atender ({abiertos.length})</h2>
+        <ListaTickets tickets={abiertos} base="/equipo/tickets" vista="equipo" vacio="No tienes tickets pendientes." />
 
-      <h2 className="mt-8 text-lg font-semibold text-ink">Por atender ({abiertos.length})</h2>
-      <ListaTickets tickets={abiertos} base="/equipo/tickets" vista="equipo" vacio="No tienes tickets pendientes." />
-
-      {cerrados.length > 0 && (
-        <>
-          <h2 className="mt-10 text-lg font-semibold text-ink">Resueltos y cerrados ({cerrados.length})</h2>
-          <ListaTickets tickets={cerrados} base="/equipo/tickets" vista="equipo" vacio="" />
-        </>
-      )}
+        {cerrados.length > 0 && (
+          <>
+            <h2 className="mt-10 font-display text-xl font-bold text-tinta">Resueltos y cerrados ({cerrados.length})</h2>
+            <ListaTickets tickets={cerrados} base="/equipo/tickets" vista="equipo" vacio="" />
+          </>
+        )}
+      </CuerpoPagina>
     </main>
   );
 }

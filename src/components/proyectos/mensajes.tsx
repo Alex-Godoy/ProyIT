@@ -56,8 +56,8 @@ export function ConversacionProyecto({
   const ultimo = mensajes.at(-1)?.created_at ?? null;
 
   return (
-    <section id="mensajes" className="scroll-mt-24 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-      <h2 className="text-lg font-semibold text-ink">{vista === "cliente" ? "Mensajes con tu equipo" : "Mensajes con el cliente"}</h2>
+    <section id="mensajes" className="scroll-mt-24 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6">
+      <h2 className="font-display text-xl font-bold text-tinta">{vista === "cliente" ? "Mensajes con tu equipo" : "Mensajes con el cliente"}</h2>
       <p className="mt-1 text-sm text-muted">
         {vista === "cliente"
           ? "Escríbele directamente a las personas que trabajan en tu proyecto."
@@ -96,12 +96,12 @@ export function ConversacionProyecto({
                       </span>
                     )}
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-2.5 sm:max-w-[75%] ${
+                      className={`max-w-[85%] rounded-[18px] px-4 py-2.5 sm:max-w-[75%] ${
                         propio
                           ? "rounded-br-md bg-navy text-white"
                           : mismoLado
                             ? "rounded-bl-md bg-brand-blue/5 ring-1 ring-brand-blue/20"
-                            : "rounded-bl-md bg-white ring-1 ring-slate-200"
+                            : "rounded-bl-md bg-white ring-1 ring-linea"
                       }`}
                     >
                       <p className={`text-xs font-semibold ${propio ? "text-white/70" : "text-muted"}`}>

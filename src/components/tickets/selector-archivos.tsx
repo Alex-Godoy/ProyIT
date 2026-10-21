@@ -22,7 +22,7 @@ export default function SelectorArchivos({
           type="button"
           disabled={disabled || archivos.length >= MAX_ADJUNTOS}
           onClick={() => input.current?.click()}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-ink hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-full border-2 border-navy/20 px-3 py-2 text-sm font-medium text-ink hover:bg-slate-50 disabled:opacity-50"
         >
           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
             <path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" />
@@ -46,7 +46,7 @@ export default function SelectorArchivos({
       {archivos.length > 0 && (
         <ul className="mt-2 space-y-1">
           {archivos.map((a, i) => (
-            <li key={`${a.name}-${i}`} className="flex items-center justify-between gap-2 rounded-lg bg-surface px-3 py-1.5 text-sm">
+            <li key={`${a.name}-${i}`} className="flex items-center justify-between gap-2 rounded-lg bg-fondo px-3 py-1.5 text-sm">
               <span className="min-w-0 truncate text-ink">
                 {a.name} <span className="text-xs text-muted">· {formatearTamano(a.size)}</span>
               </span>

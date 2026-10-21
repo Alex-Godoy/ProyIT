@@ -20,7 +20,7 @@ export default function PanelGestionTicket({
   return (
     <form
       action={gestionarTicketAction.bind(null, base, ticket.id)}
-      className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+      className="space-y-4 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea"
     >
       {responsables && (
         <div>

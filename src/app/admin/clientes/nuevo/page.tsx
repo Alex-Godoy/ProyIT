@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import ClienteForm from "@/components/admin/cliente-form";
 import { Avisos } from "@/components/admin/avisos";
 import { crearClienteAction } from "../../actions";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export default async function NuevoClientePage({
   searchParams,
@@ -13,15 +13,21 @@ export default async function NuevoClientePage({
   await requireAdmin();
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/admin/clientes" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Clientes
-      </Link>
-      <h1 className="mt-3 text-2xl font-bold text-navy">Nuevo cliente</h1>
-      <Avisos error={error} />
-      <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-        <ClienteForm action={crearClienteAction} textoBoton="Crear cliente" />
-      </div>
+    <main>
+      <CabeceraPagina
+        ancho="angosto"
+        volver={{ href: "/admin/clientes", label: "Clientes" }}
+        cejaTexto="Cartera"
+        bajada="Una empresa o una persona. Después podrás darle acceso al portal y crear sus proyectos."
+      >
+        Nuevo cliente
+      </CabeceraPagina>
+      <CuerpoPagina ancho="angosto">
+        <Avisos error={error} />
+        <div className="mt-6 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6">
+          <ClienteForm action={crearClienteAction} textoBoton="Crear cliente" />
+        </div>
+      </CuerpoPagina>
     </main>
   );
 }

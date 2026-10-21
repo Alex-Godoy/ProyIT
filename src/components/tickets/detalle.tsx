@@ -76,7 +76,7 @@ function ListaAdjuntos({ adjuntos, urls }: { adjuntos: AdjuntoTicket[]; urls: Re
             href={urls[a.storage_path]}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex max-w-[16rem] items-center gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-xs font-medium text-navy ring-1 ring-slate-200 hover:ring-brand-blue"
+            className="inline-flex max-w-[16rem] items-center gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-xs font-medium text-navy ring-1 ring-linea hover:ring-brand-blue"
           >
             <span aria-hidden>📎</span>
             <span className="truncate">{a.nombre}</span>
@@ -116,20 +116,20 @@ export function VistaTicket({
           : "Equipo ProyIT";
 
   return (
-    <div className="mt-6 grid gap-6 lg:grid-cols-3">
+    <div className="mt-6 grid gap-6 first:mt-0 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         {vista === "cliente" && <PlazoRespuesta ticket={ticket} />}
 
         {/* Cabecera */}
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+        <section className="rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold text-muted">{numeroTicket(ticket.numero)}</span>
             <EstadoTicketBadge estado={ticket.estado} vista={vista} />
             <PrioridadBadge prioridad={ticket.prioridad} />
             {vista === "equipo" && <SlaBadge ticket={ticket} />}
           </div>
-          <h1 className="mt-2 text-xl font-bold text-navy sm:text-2xl">{ticket.asunto}</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h2 className="sr-only">Detalle de la solicitud</h2>
+          <p className="mt-3 text-sm text-muted">
             {proyecto ? `Proyecto: ${proyecto.nombre}` : "Soporte general"} · abierto {formatearFechaHora(ticket.created_at)}
           </p>
           <p className="mt-4 whitespace-pre-line text-ink">{ticket.descripcion}</p>
@@ -143,12 +143,12 @@ export function VistaTicket({
             return (
               <li key={m.id} className={`flex ${propio ? "justify-end" : "justify-start"}`}>
                 <div
-                  className={`w-full max-w-[92%] rounded-2xl p-4 sm:max-w-[80%] ${
+                  className={`w-full max-w-[92%] rounded-[18px] p-4 sm:max-w-[80%] ${
                     m.interno
                       ? "bg-amber-50 ring-1 ring-amber-200"
                       : propio
                         ? "bg-navy text-white"
-                        : "bg-white ring-1 ring-slate-200"
+                        : "bg-white ring-1 ring-linea"
                   }`}
                 >
                   <p className={`text-xs font-semibold ${propio && !m.interno ? "text-white/70" : "text-muted"}`}>
@@ -166,7 +166,7 @@ export function VistaTicket({
         </ol>
 
         {cerrado ? (
-          <p className="rounded-2xl bg-slate-100 p-4 text-center text-sm text-muted">
+          <p className="rounded-[18px] bg-slate-100 p-4 text-center text-sm text-muted">
             Este ticket está cerrado.{" "}
             {vista === "cliente" ? "Si el problema vuelve, crea un ticket nuevo." : "Reábrelo cambiando su estado."}
           </p>
@@ -180,7 +180,7 @@ export function VistaTicket({
           cambiar el estado sin bajar por toda la conversación). */}
       <aside className={`space-y-4 ${panelGestion ? "order-first lg:order-none" : ""}`}>
         {panelGestion}
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+        <section className="rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Detalle</h2>
           <dl className="mt-3 space-y-3 text-sm">
             <div>
@@ -195,14 +195,14 @@ export function VistaTicket({
                 <dd className="font-medium text-ink">{cliente.nombre}</dd>
                 {cliente.telefono && (
                   <dd>
-                    <a href={`tel:${cliente.telefono}`} className="text-brand-blue hover:underline">
+                    <a href={`tel:${cliente.telefono}`} className="text-acento hover:underline">
                       {cliente.telefono}
                     </a>
                   </dd>
                 )}
                 {cliente.email && (
                   <dd>
-                    <a href={`mailto:${cliente.email}`} className="break-all text-brand-blue hover:underline">
+                    <a href={`mailto:${cliente.email}`} className="break-all text-acento hover:underline">
                       {cliente.email}
                     </a>
                   </dd>
@@ -234,7 +234,7 @@ function PlazoRespuesta({ ticket }: { ticket: Ticket }) {
 
   if (sla.tipo === "vencido") {
     return (
-      <p role="status" className="rounded-2xl bg-amber-50 px-5 py-4 text-sm text-amber-900 ring-1 ring-amber-200">
+      <p role="status" className="rounded-[18px] bg-amber-50 px-5 py-4 text-sm text-amber-900 ring-1 ring-amber-200">
         <strong className="font-semibold">Ya deberíamos haberte respondido.</strong> Disculpa la demora: tu ticket sigue
         en la fila de atención. Si no puede esperar, escríbenos a{" "}
         <a href={`mailto:${CONTACTO_EMAIL}`} className="font-semibold underline">
@@ -246,7 +246,7 @@ function PlazoRespuesta({ ticket }: { ticket: Ticket }) {
   }
 
   return (
-    <p role="status" className="rounded-2xl bg-emerald-50 px-5 py-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
+    <p role="status" className="rounded-[18px] bg-emerald-50 px-5 py-4 text-sm text-emerald-900 ring-1 ring-emerald-200">
       <strong className="font-semibold">Recibimos tu ticket.</strong> Te responderemos{" "}
       <strong className="font-semibold">{formatearPlazo(ticket.vence_at)}</strong> como máximo. Verás la respuesta aquí.
     </p>

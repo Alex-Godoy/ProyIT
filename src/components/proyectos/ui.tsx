@@ -17,13 +17,16 @@ export function BarraAvance({ avance }: { avance: number }) {
         <span className="font-semibold text-ink">{avance}%</span>
       </div>
       <div
-        className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"
+        className="mt-1.5 h-2 overflow-hidden rounded-full bg-celeste"
         role="progressbar"
         aria-valuenow={avance}
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <div className="h-full rounded-full bg-brand-blue" style={{ width: `${avance}%` }} />
+        <div
+          className={`h-full rounded-full ${avance >= 100 ? "bg-brand-orange" : "bg-[linear-gradient(90deg,#06347a,#2f95d3)]"}`}
+          style={{ width: `${avance}%` }}
+        />
       </div>
     </div>
   );

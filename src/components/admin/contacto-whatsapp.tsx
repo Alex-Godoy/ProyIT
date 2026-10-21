@@ -20,7 +20,7 @@ export default function ContactoWhatsApp() {
     <details
       open={abierto}
       onToggle={(e) => setAbierto(e.currentTarget.open)}
-      className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6"
+      className="mt-6 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6"
     >
       <summary className="cursor-pointer font-semibold text-navy">+ Registrar contacto de WhatsApp</summary>
       <form ref={formulario} action={enviar} className="mt-4 grid gap-3 sm:grid-cols-2">

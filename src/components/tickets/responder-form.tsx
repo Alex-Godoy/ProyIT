@@ -44,7 +44,7 @@ export default function ResponderForm({ ticketId, puedeNotaInterna }: { ticketId
   return (
     <form
       onSubmit={onSubmit}
-      className={`space-y-3 rounded-2xl p-4 ring-1 sm:p-5 ${interno ? "bg-amber-50 ring-amber-200" : "bg-white ring-slate-200"}`}
+      className={`space-y-3 rounded-[18px] p-4 ring-1 sm:p-5 ${interno ? "bg-amber-50 ring-amber-200" : "bg-white ring-linea"}`}
     >
       {puedeNotaInterna && (
         <div className="grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1 text-sm sm:inline-grid sm:w-80" role="tablist">
@@ -88,7 +88,7 @@ export default function ResponderForm({ ticketId, puedeNotaInterna }: { ticketId
         <button
           type="submit"
           disabled={enviando || !contenido.trim()}
-          className="rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark disabled:opacity-60"
+          className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-marino disabled:opacity-60"
         >
           {enviando ? "Enviando…" : interno ? "Guardar nota" : "Enviar"}
         </button>

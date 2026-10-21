@@ -4,10 +4,10 @@ import PortalHeader from "@/components/portal-header";
 import InactivityLogout from "@/components/inactivity-logout";
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const { perfil } = await requireUsuario();
+  const { user, perfil } = await requireUsuario();
   return (
-    <div className="min-h-screen bg-surface">
-      <PortalHeader rol={perfil?.role ?? "cliente"} />
+    <div className="min-h-screen bg-fondo">
+      <PortalHeader rol={perfil?.role ?? "cliente"} nombre={perfil?.full_name ?? user.email ?? "Mi cuenta"} />
       {children}
       <InactivityLogout minutos={30} />
     </div>

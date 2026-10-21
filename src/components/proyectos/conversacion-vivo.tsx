@@ -83,7 +83,7 @@ export function MensajeForm({ proyectoId, placeholder }: { proyectoId: string; p
         e.preventDefault();
         void enviar();
       }}
-      className="mt-3 border-t border-slate-100 pt-4"
+      className="mt-3 border-t border-linea/70 pt-4"
     >
       <textarea
         value={contenido}
@@ -110,7 +110,7 @@ export function MensajeForm({ proyectoId, placeholder }: { proyectoId: string; p
         <button
           type="submit"
           disabled={enviando || !contenido.trim()}
-          className="ml-auto rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark disabled:opacity-60"
+          className="ml-auto rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-marino disabled:opacity-60"
         >
           {enviando ? "Enviando…" : "Enviar"}
         </button>

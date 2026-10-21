@@ -5,6 +5,7 @@ import { etiquetaTipo } from "@/lib/derechos";
 import { COLUMNAS_PROYECTO, formatearFecha, formatearFechaHora, type Proyecto } from "@/lib/proyectos";
 import { BarraAvance, EtapaBadge } from "@/components/proyectos/ui";
 import { ESTADOS_ABIERTOS, estadoSla, numeroTicket, type Ticket } from "@/lib/tickets";
+import { CabeceraPagina, botonContornoClaro, botonNaranjo, tarjeta, tarjetaEnlace } from "@/components/portal/ui";
 
 type TicketAtencion = Pick<Ticket, "id" | "numero" | "asunto" | "responsable_id" | "vence_at" | "primera_respuesta_at" | "estado"> & {
   cliente: { nombre: string; nombre_fantasia: string | null } | null;
@@ -144,62 +145,55 @@ export default async function AdminResumenPage() {
 
   return (
     <main>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-navy text-white">
-        <div className="pointer-events-none absolute -right-24 -top-32 h-80 w-80 rounded-full bg-brand-blue/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-40 left-10 h-72 w-72 rounded-full bg-brand-orange/15 blur-3xl" />
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-medium capitalize text-white/60">{fechaLarga}</p>
-            <h1 className="mt-1 text-2xl font-extrabold sm:text-3xl">
-              {saludo()}, {perfil?.full_name?.split(" ")[0] ?? "super usuario"}
-            </h1>
-            <p className="mt-2 max-w-xl text-white/75">
-              {nAtencion > 0
-                ? `Tienes ${nAtencion} ${nAtencion === 1 ? "tema que requiere" : "temas que requieren"} tu atención.`
-                : (enCurso.count ?? 0) > 0
-                  ? "Todo al día. Tus clientes ven el avance de sus proyectos en tiempo real."
-                  : "Administra tus clientes y mantén al día el avance de sus proyectos."}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Link
-              href="/admin/clientes/nuevo"
-              className="rounded-lg bg-brand-orange px-5 py-2.5 text-center text-sm font-semibold text-white shadow-lg shadow-brand-orange/30 transition hover:bg-brand-orange-dark"
-            >
+      <CabeceraPagina
+        solapa
+        cejaTexto={<span className="capitalize">{fechaLarga}</span>}
+        bajada={
+          nAtencion > 0
+            ? `Tienes ${nAtencion} ${nAtencion === 1 ? "tema que requiere" : "temas que requieren"} tu atención.`
+            : (enCurso.count ?? 0) > 0
+              ? "Todo al día. Tus clientes ven el avance de sus proyectos en tiempo real."
+              : "Administra tus clientes y mantén al día el avance de sus proyectos."
+        }
+        acciones={
+          <>
+            <Link href="/admin/clientes/nuevo" className={botonNaranjo}>
               + Nuevo cliente
             </Link>
-            <Link
-              href="/admin/proyectos/nuevo"
-              className="rounded-lg border border-white/30 px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-white/10"
-            >
+            <Link href="/admin/proyectos/nuevo" className={botonContornoClaro}>
               + Nuevo proyecto
             </Link>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      >
+        {saludo()}, {perfil?.full_name?.split(" ")[0] ?? "super usuario"}
+      </CabeceraPagina>
 
-      <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+      <div className="relative mx-auto max-w-[1120px] px-4 pb-16 sm:px-6">
         {/* KPIs */}
-        <div className="grid grid-cols-2 gap-3 pt-6 lg:grid-cols-4">
+        <div className="-mt-16 grid grid-cols-2 gap-3 sm:-mt-20 sm:gap-4 lg:grid-cols-4">
           {kpis.map((k) => (
             <Link
               key={k.etiqueta}
               href={k.href}
-              className="group flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue sm:gap-4 sm:p-5"
+              className={`${tarjetaEnlace} group flex items-center gap-3 p-4 shadow-[0_30px_60px_-30px_rgba(4,31,74,0.45)] sm:gap-4 sm:p-5`}
             >
               <span
-                className={`hidden rounded-xl p-2.5 sm:inline-flex ${
-                  k.alerta ? "bg-brand-orange/10 text-brand-orange-dark" : "bg-navy/5 text-navy"
+                className={`hidden rounded-xl p-3 sm:inline-flex ${
+                  k.alerta ? "bg-durazno text-brand-orange-text" : "bg-celeste text-navy"
                 }`}
               >
                 <k.icono />
               </span>
               <span className="min-w-0">
-                <span className={`block text-2xl font-bold sm:text-3xl ${k.alerta ? "text-brand-orange-dark" : "text-navy"}`}>
+                <span
+                  className={`block font-display text-3xl font-extrabold leading-none sm:text-4xl ${
+                    k.alerta ? "text-brand-orange-text" : "text-navy"
+                  }`}
+                >
                   {k.valor}
                 </span>
-                <span className="block text-xs text-muted sm:text-sm">{k.etiqueta}</span>
+                <span className="mt-1.5 block text-xs font-medium text-gris sm:text-sm">{k.etiqueta}</span>
               </span>
             </Link>
           ))}
@@ -207,10 +201,10 @@ export default async function AdminResumenPage() {
 
         {/* Primeros pasos (se oculta cuando todo está hecho) */}
         {pasosHechos < pasos.length && (
-          <section className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
+          <section className="mt-6 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-ink">Primeros pasos</h2>
+                <h2 className="font-display text-xl font-bold text-tinta">Primeros pasos</h2>
                 <p className="text-sm text-muted">Deja el portal listo para tus clientes.</p>
               </div>
               <span className="text-sm font-semibold text-navy">
@@ -229,7 +223,7 @@ export default async function AdminResumenPage() {
                   <Link
                     href={p.href}
                     className={`flex h-full gap-3 rounded-xl p-3 ring-1 transition ${
-                      p.hecho ? "bg-emerald-50/60 ring-emerald-100" : "ring-slate-200 hover:ring-brand-blue"
+                      p.hecho ? "bg-emerald-50/60 ring-emerald-100" : "ring-linea hover:ring-brand-blue"
                     }`}
                   >
                     <span
@@ -256,13 +250,13 @@ export default async function AdminResumenPage() {
           {/* Proyectos en curso */}
           <section className="lg:col-span-2">
             <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-lg font-semibold text-ink">Proyectos en curso</h2>
-              <Link href="/admin/proyectos" className="text-sm font-medium text-brand-blue hover:underline">
+              <h2 className="font-display text-xl font-bold text-tinta">Proyectos en curso</h2>
+              <Link href="/admin/proyectos" className="text-sm font-medium text-acento hover:underline">
                 Ver todos →
               </Link>
             </div>
             {proyectos.length === 0 ? (
-              <div className="mt-3 rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
+              <div className="mt-3 rounded-[18px] border-2 border-dashed border-linea p-8 text-center">
                 <p className="font-medium text-ink">No hay proyectos en curso.</p>
                 <p className="mt-1 text-sm text-muted">Cuando crees uno, aquí verás su avance de un vistazo.</p>
               </div>
@@ -272,7 +266,7 @@ export default async function AdminResumenPage() {
                   <li key={p.id}>
                     <Link
                       href={`/admin/proyectos/${p.id}`}
-                      className="flex h-full flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue sm:p-5"
+                      className="flex h-full flex-col rounded-[18px] bg-white p-4 shadow-sm ring-1 ring-linea transition hover:shadow-md hover:ring-brand-blue sm:p-5"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -294,9 +288,9 @@ export default async function AdminResumenPage() {
 
           {/* Requiere tu atención */}
           <section id="atencion" className="scroll-mt-24">
-            <h2 className="text-lg font-semibold text-ink">Requiere tu atención</h2>
+            <h2 className="font-display text-xl font-bold text-tinta">Requiere tu atención</h2>
             {nAtencion === 0 ? (
-              <div className="mt-3 flex items-center gap-3 rounded-2xl bg-emerald-50 p-5 ring-1 ring-emerald-100">
+              <div className="mt-3 flex items-center gap-3 rounded-[18px] bg-emerald-50 p-5 ring-1 ring-emerald-100">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                   ✓
                 </span>
@@ -399,12 +393,12 @@ function GrupoAtencion({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+    <div className={`${tarjeta} overflow-hidden`}>
       <div className={`flex items-center justify-between px-4 py-2.5 text-sm font-semibold ${TONOS[tono]}`}>
         <span>{titulo}</span>
         <span className="rounded-full bg-white/70 px-2 py-0.5 text-xs">{total}</span>
       </div>
-      <ul className="divide-y divide-slate-100">{children}</ul>
+      <ul className="divide-y divide-linea/70">{children}</ul>
     </div>
   );
 }

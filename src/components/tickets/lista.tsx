@@ -21,7 +21,7 @@ export default function ListaTickets({
 }) {
   if (tickets.length === 0) {
     return (
-      <div className="mt-4 rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center text-muted">{vacio}</div>
+      <div className="mt-4 rounded-[18px] border-2 border-dashed border-linea p-8 text-center text-muted">{vacio}</div>
     );
   }
   return (
@@ -30,7 +30,7 @@ export default function ListaTickets({
         <li key={t.id}>
           <Link
             href={`${base}/${t.id}`}
-            className="block rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue sm:p-5"
+            className="block rounded-[18px] bg-white p-4 shadow-sm ring-1 ring-linea transition hover:shadow-md hover:ring-brand-blue sm:p-5"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-muted">{numeroTicket(t.numero)}</span>
@@ -38,7 +38,7 @@ export default function ListaTickets({
               <PrioridadBadge prioridad={t.prioridad} />
               {vista === "equipo" && <SlaBadge ticket={t} />}
               {vista === "equipo" && !t.responsable_id && (
-                <span className="rounded-full bg-brand-orange px-2.5 py-0.5 text-xs font-semibold text-white">Sin asignar</span>
+                <span className="rounded-full bg-brand-orange px-2.5 py-0.5 text-xs font-bold text-marino">Sin asignar</span>
               )}
             </div>
             <p className="mt-2 font-semibold text-navy">{t.asunto}</p>

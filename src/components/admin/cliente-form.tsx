@@ -142,7 +142,7 @@ export default function ClienteForm({
           />
         </div>
         {!cliente && (
-          <label className="flex items-start gap-3 rounded-lg bg-surface p-3 text-sm sm:col-span-2">
+          <label className="flex items-start gap-3 rounded-lg bg-fondo p-3 text-sm sm:col-span-2">
             <input type="checkbox" name="dar_acceso" defaultChecked className="mt-0.5 h-4 w-4 accent-navy" />
             <span>
               <span className="font-medium text-ink">Dar acceso al portal con este correo</span>
@@ -207,7 +207,7 @@ export default function ClienteForm({
         </label>
       </section>
 
-      <div className="flex justify-end border-t border-slate-100 pt-5">
+      <div className="flex justify-end border-t border-linea/70 pt-5">
         <BotonEnviar>{textoBoton}</BotonEnviar>
       </div>
     </form>

@@ -158,11 +158,11 @@ export default function NuevoTicketForm({
         </p>
       )}
 
-      <div className="flex justify-end border-t border-slate-100 pt-5">
+      <div className="flex justify-end border-t border-linea/70 pt-5">
         <button
           type="submit"
           disabled={enviando || !clienteId}
-          className="rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark disabled:opacity-60"
+          className="rounded-full bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-marino disabled:opacity-60"
         >
           {enviando ? (archivos.length > 0 ? "Enviando y subiendo archivos…" : "Enviando…") : "Enviar ticket"}
         </button>

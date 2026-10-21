@@ -2,13 +2,18 @@
 // se nota de inmediato aunque la consulta tarde.
 export default function Cargando() {
   return (
-    <main className="mx-auto max-w-6xl animate-pulse px-4 py-8 sm:px-6 sm:py-10" aria-busy="true" aria-live="polite">
+    <main aria-busy="true" aria-live="polite">
       <span className="sr-only">Cargando…</span>
-      <div className="h-7 w-56 rounded-lg bg-slate-200" />
-      <div className="mt-3 h-4 w-80 max-w-full rounded bg-slate-200" />
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
+      <div className="bg-marino">
+        <div className="mx-auto max-w-[1120px] animate-pulse px-4 pb-12 pt-10 sm:px-6">
+          <div className="h-3 w-28 rounded bg-white/15" />
+          <div className="mt-4 h-9 w-72 max-w-full rounded-lg bg-white/20" />
+          <div className="mt-4 h-4 w-96 max-w-full rounded bg-white/10" />
+        </div>
+      </div>
+      <div className="mx-auto grid max-w-[1120px] animate-pulse gap-5 px-4 pt-10 sm:px-6 md:grid-cols-2">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-36 rounded-2xl bg-white ring-1 ring-slate-200" />
+          <div key={i} className="h-36 rounded-[18px] border border-linea bg-white" />
         ))}
       </div>
     </main>

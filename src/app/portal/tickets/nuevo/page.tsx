@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUsuario } from "@/lib/auth";
 import NuevoTicketForm from "@/components/tickets/nuevo-ticket-form";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export const metadata = { title: "Nuevo ticket · ProyIT" };
 
@@ -18,19 +18,24 @@ export default async function NuevoTicketPage() {
   if (!clientes || clientes.length === 0) redirect("/portal/tickets");
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-      <Link href="/portal/tickets" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Mis tickets
-      </Link>
-      <h1 className="mt-3 text-2xl font-bold text-navy sm:text-3xl">Nuevo ticket de soporte</h1>
-      <p className="mt-1 text-muted">Mientras más detalles nos des, más rápido lo resolvemos.</p>
-      <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
-        <NuevoTicketForm
-          base="/portal/tickets"
-          clientes={clientes.map((c) => ({ id: c.id, nombre: c.nombre_fantasia ?? c.nombre }))}
-          proyectos={(proyectos ?? []) as { id: string; nombre: string; cliente_id: string }[]}
-        />
-      </div>
+    <main>
+      <CabeceraPagina
+        ancho="angosto"
+        volver={{ href: "/portal/tickets", label: "Mis tickets" }}
+        cejaTexto="Soporte"
+        bajada="Mientras más detalles nos des, más rápido lo resolvemos."
+      >
+        Nuevo ticket de soporte
+      </CabeceraPagina>
+      <CuerpoPagina ancho="angosto">
+        <div className="mt-6 rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6">
+          <NuevoTicketForm
+            base="/portal/tickets"
+            clientes={clientes.map((c) => ({ id: c.id, nombre: c.nombre_fantasia ?? c.nombre }))}
+            proyectos={(proyectos ?? []) as { id: string; nombre: string; cliente_id: string }[]}
+          />
+        </div>
+      </CuerpoPagina>
     </main>
   );
 }

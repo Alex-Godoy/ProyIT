@@ -49,7 +49,7 @@ export type ClienteResumen = {
   comuna: string | null;
 } | null;
 
-const tarjeta = "rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6";
+const tarjeta = "rounded-[18px] bg-white p-5 shadow-sm ring-1 ring-linea sm:p-6";
 
 export default function ProyectoWorkspace({
   base,
@@ -94,8 +94,8 @@ export default function ProyectoWorkspace({
   return (
     <>
       {/* Pestañas: en móvil se deslizan horizontalmente */}
-      <nav aria-label="Secciones del proyecto" className="-mx-4 mt-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <div className="flex w-max gap-1 rounded-xl bg-white p-1 ring-1 ring-slate-200 sm:w-auto">
+      <nav aria-label="Secciones del proyecto" className="-mx-4 mt-6 overflow-x-auto px-4 first:mt-0 sm:mx-0 sm:px-0">
+        <div className="flex w-max gap-1 rounded-full border border-linea bg-white p-1 sm:w-auto">
           {PESTANAS.map((p) => {
             const activa = p.valor === pestana;
             return (
@@ -104,14 +104,14 @@ export default function ProyectoWorkspace({
                 href={href(p.valor)}
                 aria-current={activa ? "page" : undefined}
                 scroll={false}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                  activa ? "bg-navy text-white" : "text-muted hover:bg-slate-50 hover:text-ink"
+                className={`flex min-h-10 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  activa ? "bg-marino text-white" : "text-gris hover:bg-fondo hover:text-tinta"
                 }`}
               >
                 {p.etiqueta}
                 {p.valor === "mensajes" && !activa && mensajes.sinLeer > 0 && (
                   <span
-                    className="rounded-full bg-brand-orange px-1.5 text-xs text-white"
+                    className="rounded-full bg-brand-orange px-1.5 text-xs font-bold text-marino"
                     aria-label={`${mensajes.sinLeer} sin leer`}
                   >
                     {mensajes.sinLeer}
@@ -137,7 +137,7 @@ export default function ProyectoWorkspace({
 
             {puede(rol, "avance_editar") && (
               <section className={tarjeta}>
-                <h2 className="text-lg font-semibold text-ink">Etapa y avance</h2>
+                <h2 className="font-display text-xl font-bold text-tinta">Etapa y avance</h2>
                 <p className="mt-1 text-sm text-muted">Es lo primero que ve el cliente al abrir su proyecto.</p>
                 <form
                   action={actualizarAvanceAction.bind(null, base, proyecto.id)}
@@ -180,7 +180,7 @@ export default function ProyectoWorkspace({
                         Según los hitos ({completados} de {hitos.length} completados) el avance sería{" "}
                         <strong>{sugerido}%</strong>.
                       </span>
-                      <button type="submit" className="font-semibold text-brand-blue hover:underline">
+                      <button type="submit" className="font-semibold text-acento hover:underline">
                         Usar {sugerido}%
                       </button>
                     </p>
@@ -191,7 +191,7 @@ export default function ProyectoWorkspace({
 
             {cliente && (
               <section className={tarjeta}>
-                <h2 className="text-lg font-semibold text-ink">Cliente</h2>
+                <h2 className="font-display text-xl font-bold text-tinta">Cliente</h2>
                 <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="text-muted">{cliente.tipo === "persona" ? "Nombre" : "Empresa"}</dt>
@@ -209,7 +209,7 @@ export default function ProyectoWorkspace({
                     <div>
                       <dt className="text-muted">Teléfono</dt>
                       <dd>
-                        <a href={`tel:${cliente.telefono}`} className="font-medium text-brand-blue hover:underline">
+                        <a href={`tel:${cliente.telefono}`} className="font-medium text-acento hover:underline">
                           {cliente.telefono}
                         </a>
                       </dd>
@@ -219,7 +219,7 @@ export default function ProyectoWorkspace({
                     <div>
                       <dt className="text-muted">Correo</dt>
                       <dd>
-                        <a href={`mailto:${cliente.email}`} className="font-medium text-brand-blue hover:underline">
+                        <a href={`mailto:${cliente.email}`} className="font-medium text-acento hover:underline">
                           {cliente.email}
                         </a>
                       </dd>
@@ -240,7 +240,7 @@ export default function ProyectoWorkspace({
         {pestana === "hitos" && (
           <section className={tarjeta}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-lg font-semibold text-ink">Hitos</h2>
+              <h2 className="font-display text-xl font-bold text-tinta">Hitos</h2>
               {hitos.length > 0 && (
                 <span className="text-sm text-muted">
                   {completados} de {hitos.length} completados
@@ -251,7 +251,7 @@ export default function ProyectoWorkspace({
             {hitos.length === 0 ? (
               <p className="mt-3 text-muted">Sin hitos todavía.</p>
             ) : (
-              <ol className="mt-4 divide-y divide-slate-100">
+              <ol className="mt-4 divide-y divide-linea/70">
                 {hitos.map((h) => (
                   <li key={h.id} className="py-3">
                     <div className="flex items-start justify-between gap-3">
@@ -283,12 +283,12 @@ export default function ProyectoWorkspace({
 
                     {puede(rol, "hito_editar") && (
                       <details className="group ml-8 mt-2">
-                        <summary className="cursor-pointer list-none text-sm font-medium text-brand-blue hover:underline">
+                        <summary className="cursor-pointer list-none text-sm font-medium text-acento hover:underline">
                           Editar
                         </summary>
                         <form
                           action={actualizarHitoAction.bind(null, base, proyecto.id, h.id)}
-                          className="mt-3 grid gap-3 rounded-xl bg-surface p-3 sm:grid-cols-[1fr_auto]"
+                          className="mt-3 grid gap-3 rounded-xl bg-fondo p-3 sm:grid-cols-[1fr_auto]"
                         >
                           <input name="titulo" required defaultValue={h.titulo} aria-label="Título" className={inputClase} />
                           <input
@@ -319,7 +319,7 @@ export default function ProyectoWorkspace({
             {puede(rol, "hito_editar") && (
               <form
                 action={crearHitoAction.bind(null, base, proyecto.id)}
-                className="mt-5 grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+                className="mt-5 grid gap-3 border-t border-linea/70 pt-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
               >
                 <div>
                   <label htmlFor="hito-titulo" className={labelClase}>
@@ -345,13 +345,13 @@ export default function ProyectoWorkspace({
         {pestana === "documentos" && (
           <section className={tarjeta}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-ink">Documentos</h2>
+              <h2 className="font-display text-xl font-bold text-tinta">Documentos</h2>
               {puede(rol, "documento_subir") && <SubirDocumento proyectoId={proyecto.id} />}
             </div>
             {documentos.length === 0 ? (
               <p className="mt-3 text-muted">Sin documentos todavía.</p>
             ) : (
-              <ul className="mt-4 divide-y divide-slate-100">
+              <ul className="mt-4 divide-y divide-linea/70">
                 {documentos.map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-3 py-3">
                     <DatosDocumento documento={d} />
@@ -378,7 +378,7 @@ export default function ProyectoWorkspace({
 
         {pestana === "bitacora" && (
           <section className={tarjeta}>
-            <h2 className="text-lg font-semibold text-ink">Bitácora</h2>
+            <h2 className="font-display text-xl font-bold text-tinta">Bitácora</h2>
             <p className="mt-1 text-sm text-muted">El cliente ve estas novedades en su portal.</p>
             {puede(rol, "novedad_publicar") && (
               <form action={crearNovedadAction.bind(null, base, proyecto.id)} className="mt-4 space-y-3">
@@ -418,14 +418,14 @@ export default function ProyectoWorkspace({
         {pestana === "equipo" && (
           <>
             <section className={tarjeta}>
-              <h2 className="text-lg font-semibold text-ink">Equipo del proyecto</h2>
+              <h2 className="font-display text-xl font-bold text-tinta">Equipo del proyecto</h2>
               <p className="mt-1 text-sm text-muted">El cliente ve el nombre y cargo de cada persona.</p>
               {equipo.length === 0 ? (
                 <p className="mt-3 text-muted">Nadie asignado todavía.</p>
               ) : (
                 <ul className="mt-4 grid gap-3 sm:grid-cols-2">
                   {equipo.map((e) => (
-                    <li key={e.nombre + e.cargo} className="flex items-center gap-3 rounded-xl p-3 ring-1 ring-slate-200">
+                    <li key={e.nombre + e.cargo} className="flex items-center gap-3 rounded-xl p-3 ring-1 ring-linea">
                       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy/5 text-sm font-bold text-navy">
                         {e.nombre.charAt(0).toUpperCase()}
                       </span>

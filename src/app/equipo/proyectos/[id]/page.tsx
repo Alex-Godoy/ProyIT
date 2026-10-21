@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireEquipo, rolEnProyecto } from "@/lib/auth";
 import { etiquetaCargo } from "@/lib/permisos";
@@ -6,6 +5,7 @@ import { cargarContextoProyecto, cargarProyecto } from "@/components/proyectos/d
 import { cargarMensajes } from "@/components/proyectos/mensajes";
 import ProyectoWorkspace, { pestanaValida } from "@/components/proyectos/workspace";
 import { Avisos } from "@/components/admin/avisos";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export default async function EquipoProyectoPage({
   params,
@@ -28,27 +28,27 @@ export default async function EquipoProyectoPage({
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/equipo" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Mis proyectos
-      </Link>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-navy">{datos.proyecto.nombre}</h1>
-        <span className="rounded-full bg-navy/5 px-2.5 py-0.5 text-xs font-semibold text-navy">
-          Tu rol: {rol === "admin" ? "Super usuario" : etiquetaCargo(rol)}
-        </span>
-      </div>
-      <Avisos error={error} ok={ok} />
+    <main>
+      <CabeceraPagina
+        ancho="medio"
+        volver={{ href: "/equipo", label: "Mis proyectos" }}
+        cejaTexto={`Tu rol: ${rol === "admin" ? "Super usuario" : etiquetaCargo(rol)}`}
+      >
+        {datos.proyecto.nombre}
+      </CabeceraPagina>
+      <CuerpoPagina ancho="medio">
+        <Avisos error={error} ok={ok} />
 
-      <ProyectoWorkspace
-        base="/equipo/proyectos"
-        rol={rol}
-        pestana={pestanaValida(tab)}
-        {...datos}
-        equipo={contexto.equipo}
-        cliente={contexto.cliente}
-        mensajes={mensajes}
-      />
+        <ProyectoWorkspace
+          base="/equipo/proyectos"
+          rol={rol}
+          pestana={pestanaValida(tab)}
+          {...datos}
+          equipo={contexto.equipo}
+          cliente={contexto.cliente}
+          mensajes={mensajes}
+        />
+      </CuerpoPagina>
     </main>
   );
 }

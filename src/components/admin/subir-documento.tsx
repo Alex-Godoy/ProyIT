@@ -62,7 +62,7 @@ export default function SubirDocumento({ proyectoId }: { proyectoId: string }) {
 
   return (
     <div>
-      <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-ink hover:bg-slate-50">
+      <label className="inline-flex cursor-pointer items-center rounded-full border-2 border-navy/20 px-4 py-2 text-sm font-semibold text-ink hover:bg-slate-50">
         {subiendo ? "Subiendo…" : "+ Subir documento"}
         <input ref={input} type="file" className="sr-only" onChange={onChange} disabled={subiendo} />
       </label>

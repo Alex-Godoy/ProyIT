@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUsuario } from "@/lib/auth";
 import { numeroTicket } from "@/lib/tickets";
 import { Avisos } from "@/components/admin/avisos";
 import { VistaTicket, cargarTicket } from "@/components/tickets/detalle";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export default async function TicketClientePage({
   params,
@@ -20,13 +20,17 @@ export default async function TicketClientePage({
   if (!datos) notFound();
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/portal/tickets" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Mis tickets
-      </Link>
-      <span className="sr-only">Ticket {numeroTicket(datos.ticket.numero)}</span>
-      <Avisos ok={ok} error={error} />
-      <VistaTicket datos={datos} vista="cliente" />
+    <main>
+      <CabeceraPagina
+        volver={{ href: "/portal/tickets", label: "Mis tickets" }}
+        cejaTexto={`Ticket ${numeroTicket(datos.ticket.numero)}`}
+      >
+        {datos.ticket.asunto}
+      </CabeceraPagina>
+      <CuerpoPagina>
+        <Avisos ok={ok} error={error} />
+        <VistaTicket datos={datos} vista="cliente" />
+      </CuerpoPagina>
     </main>
   );
 }

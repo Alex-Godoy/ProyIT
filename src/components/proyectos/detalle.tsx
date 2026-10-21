@@ -87,12 +87,12 @@ export async function cargarContextoProyecto(supabase: SupabaseClient, proyecto:
 
 export function ResumenProyecto({ proyecto }: { proyecto: Proyecto }) {
   return (
-    <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-2xl font-bold text-navy sm:text-3xl">{proyecto.nombre}</h1>
+    <section className="rounded-[18px] bg-white p-6 shadow-sm ring-1 ring-linea sm:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[13px] font-bold uppercase tracking-[0.12em] text-ceja">Estado del proyecto</h2>
         <EtapaBadge etapa={proyecto.etapa} />
       </div>
-      {proyecto.descripcion && <p className="mt-3 whitespace-pre-line text-muted">{proyecto.descripcion}</p>}
+      {proyecto.descripcion && <p className="mt-3 whitespace-pre-line text-gris">{proyecto.descripcion}</p>}
       <div className="mt-6">
         <BarraAvance avance={proyecto.avance} />
       </div>

@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireEquipo } from "@/lib/auth";
 import { Avisos } from "@/components/admin/avisos";
 import { VistaTicket, cargarTicket } from "@/components/tickets/detalle";
 import PanelGestionTicket from "@/components/tickets/gestion";
+import { numeroTicket } from "@/lib/tickets";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export default async function EquipoTicketPage({
   params,
@@ -21,16 +22,21 @@ export default async function EquipoTicketPage({
   if (!datos) notFound();
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/equipo/tickets" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Mis tickets
-      </Link>
-      <Avisos ok={ok} error={error} />
-      <VistaTicket
-        datos={datos}
-        vista="equipo"
-        panelGestion={<PanelGestionTicket ticket={datos.ticket} base="/equipo/tickets" />}
-      />
+    <main>
+      <CabeceraPagina
+        volver={{ href: "/equipo/tickets", label: "Mis tickets" }}
+        cejaTexto={`Ticket ${numeroTicket(datos.ticket.numero)}`}
+      >
+        {datos.ticket.asunto}
+      </CabeceraPagina>
+      <CuerpoPagina>
+        <Avisos ok={ok} error={error} />
+        <VistaTicket
+          datos={datos}
+          vista="equipo"
+          panelGestion={<PanelGestionTicket ticket={datos.ticket} base="/equipo/tickets" />}
+        />
+      </CuerpoPagina>
     </main>
   );
 }

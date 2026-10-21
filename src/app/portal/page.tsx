@@ -5,6 +5,14 @@ import { MODULOS } from "@/components/brand";
 import { ESTADOS_ABIERTOS } from "@/lib/tickets";
 import { textoSinLeer } from "@/lib/proyectos";
 import { cargarSinLeer } from "@/components/proyectos/sin-leer";
+import {
+  CabeceraPagina,
+  CuerpoPagina,
+  botonContornoClaro,
+  botonNaranjo,
+  tarjeta,
+  tarjetaEnlace,
+} from "@/components/portal/ui";
 
 export const metadata = { title: "Mi portal · ProyIT" };
 
@@ -47,70 +55,81 @@ export default async function PortalPage() {
       : perfil?.company;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-      <h1 className="text-2xl font-bold text-navy sm:text-3xl">Hola, {nombre}</h1>
-      <p className="mt-2 text-muted">
-        {empresa ? `${empresa} · ` : ""}
-        Aquí tienes todo lo que hacemos contigo, en un solo lugar.
-      </p>
-
-      {/* Lo más urgente que viene a hacer un socio: pedir ayuda, a un toque. */}
-      {clientes && clientes.length > 0 && (
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Link
-            href="/portal/tickets/nuevo"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-orange-text px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-orange/20 hover:bg-brand-orange-text-dark"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-            Pedir soporte
-          </Link>
-          {nTickets > 0 && (
-            <Link href="/portal/tickets" className="text-center text-sm font-semibold text-navy hover:underline">
-              Ver mis tickets ({nTickets} {nTickets === 1 ? "abierto" : "abiertos"})
-            </Link>
-          )}
-        </div>
-      )}
-
-      <div className="mt-10 grid gap-6 sm:grid-cols-2">
-        {MODULOS.map((m) => {
-          const href = MODULOS_ACTIVOS[m.key];
-          const contenido = (
+    <main>
+      <CabeceraPagina
+        solapa
+        cejaTexto={empresa || "Tu espacio con ProyIT"}
+        bajada="Aquí tienes todo lo que hacemos contigo, en un solo lugar."
+        acciones={
+          // Lo más urgente que viene a hacer un socio: pedir ayuda, a un toque.
+          clientes && clientes.length > 0 ? (
             <>
-              {href ? (
-                <span
-                  className={`absolute right-5 top-5 rounded-full px-3 py-1 text-xs font-semibold ${
-                    contadores[m.key]?.alerta ? "bg-amber-100 text-amber-800" : "bg-navy/5 text-navy"
-                  }`}
-                >
-                  {contadores[m.key]?.texto}
-                </span>
-              ) : (
-                <span className="absolute right-5 top-5 rounded-full bg-brand-orange/10 px-3 py-1 text-xs font-semibold text-brand-orange-dark">
-                  Próximamente
-                </span>
+              <Link href="/portal/tickets/nuevo" className={botonNaranjo}>
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+                Pedir soporte
+              </Link>
+              {nTickets > 0 && (
+                <Link href="/portal/tickets" className={botonContornoClaro}>
+                  Ver mis tickets ({nTickets} {nTickets === 1 ? "abierto" : "abiertos"})
+                </Link>
               )}
-              <div className="mb-4 inline-flex rounded-lg bg-navy/5 p-2.5 text-navy">{m.icon}</div>
-              <h2 className="text-lg font-semibold text-ink">{m.titulo}</h2>
-              <p className="mt-2 text-muted">{m.texto}</p>
             </>
-          );
+          ) : undefined
+        }
+      >
+        Hola, {nombre}
+      </CabeceraPagina>
 
-          return href ? (
-            <Link
-              key={m.key}
-              href={href}
-              className="relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md hover:ring-brand-blue"
-            >
-              {contenido}
-            </Link>
-          ) : (
-            <article key={m.key} className="relative rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              {contenido}
-            </article>
-          );
-        })}
-      </div>
+      <CuerpoPagina solapa>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {MODULOS.map((m) => {
+            const href = MODULOS_ACTIVOS[m.key];
+            const contador = contadores[m.key];
+            const contenido = (
+              <>
+                <div className="flex items-start justify-between gap-3">
+                  <span className={`inline-flex rounded-xl p-3 ${href ? "bg-celeste text-navy" : "bg-fondo text-gris"}`}>
+                    {m.icon}
+                  </span>
+                  {href ? (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        contador?.alerta ? "bg-durazno text-[#8a4a12]" : "bg-fondo text-navy"
+                      }`}
+                    >
+                      {contador?.texto}
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-linea px-3 py-1 text-xs font-bold uppercase tracking-[0.06em] text-gris">
+                      Próximamente
+                    </span>
+                  )}
+                </div>
+                <h2 className="mt-5 font-display text-[22px] font-bold leading-tight text-tinta">{m.titulo}</h2>
+                <p className="mt-2 flex-grow text-[15px] text-gris">{m.texto}</p>
+                {href && (
+                  <span className="mt-5 inline-flex items-center gap-1.5 text-[15px] font-bold text-navy">
+                    Abrir
+                    <span aria-hidden="true" className="transition group-hover:translate-x-1">
+                      →
+                    </span>
+                  </span>
+                )}
+              </>
+            );
+
+            return href ? (
+              <Link key={m.key} href={href} className={`${tarjetaEnlace} group flex flex-col p-6 sm:p-7`}>
+                {contenido}
+              </Link>
+            ) : (
+              <article key={m.key} className={`${tarjeta} flex flex-col p-6 sm:p-7`}>
+                {contenido}
+              </article>
+            );
+          })}
+        </div>
+      </CuerpoPagina>
     </main>
   );
 }

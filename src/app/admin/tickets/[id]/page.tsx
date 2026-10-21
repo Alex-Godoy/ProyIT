@@ -4,6 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import { Avisos } from "@/components/admin/avisos";
 import { VistaTicket, cargarTicket } from "@/components/tickets/detalle";
 import PanelGestionTicket, { type OpcionResponsable } from "@/components/tickets/gestion";
+import { numeroTicket } from "@/lib/tickets";
+import { CabeceraPagina, CuerpoPagina } from "@/components/portal/ui";
 
 export default async function AdminTicketPage({
   params,
@@ -30,28 +32,33 @@ export default async function AdminTicketPage({
   const responsables: OpcionResponsable[] = (equipo ?? []).map((e) => ({ ...e, sugerido: sugeridos.has(e.id) }));
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-      <Link href="/admin/tickets" className="text-sm font-medium text-brand-blue hover:underline">
-        ← Tickets
-      </Link>
-      <Avisos ok={ok} error={error} />
-      <VistaTicket
-        datos={datos}
-        vista="equipo"
-        panelGestion={
-          responsables.length === 0 ? (
-            <p className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-800">
-              Aún no tienes equipo para asignar.{" "}
-              <Link href="/admin/equipo" className="font-semibold underline">
-                Agrega a alguien
-              </Link>{" "}
-              o atiéndelo tú directamente.
-            </p>
-          ) : (
-            <PanelGestionTicket ticket={datos.ticket} base="/admin/tickets" responsables={responsables} />
-          )
-        }
-      />
+    <main>
+      <CabeceraPagina
+        volver={{ href: "/admin/tickets", label: "Tickets" }}
+        cejaTexto={`Ticket ${numeroTicket(datos.ticket.numero)}`}
+      >
+        {datos.ticket.asunto}
+      </CabeceraPagina>
+      <CuerpoPagina>
+        <Avisos ok={ok} error={error} />
+        <VistaTicket
+          datos={datos}
+          vista="equipo"
+          panelGestion={
+            responsables.length === 0 ? (
+              <p className="rounded-[18px] bg-amber-50 p-4 text-sm text-amber-800">
+                Aún no tienes equipo para asignar.{" "}
+                <Link href="/admin/equipo" className="font-semibold underline">
+                  Agrega a alguien
+                </Link>{" "}
+                o atiéndelo tú directamente.
+              </p>
+            ) : (
+              <PanelGestionTicket ticket={datos.ticket} base="/admin/tickets" responsables={responsables} />
+            )
+          }
+        />
+      </CuerpoPagina>
     </main>
   );
 }

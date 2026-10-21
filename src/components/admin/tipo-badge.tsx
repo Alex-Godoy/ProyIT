@@ -4,7 +4,7 @@ export function TipoBadge({ tipo }: { tipo: TipoCliente }) {
   return (
     <span
       className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-        tipo === "empresa" ? "bg-navy/5 text-navy" : "bg-brand-blue/10 text-brand-blue"
+        tipo === "empresa" ? "bg-navy/5 text-navy" : "bg-brand-blue/10 text-acento"
       }`}
     >
       {tipo === "empresa" ? (

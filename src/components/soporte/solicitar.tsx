@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom";
 import Captcha, { TURNSTILE_SITE_KEY, type CaptchaHandle } from "@/components/captcha";
 import { solicitarDiagnosticoAction, type EstadoEnvio } from "@/app/diagnostico-acciones";
 import { SERVICIOS_SOPORTE, type ServicioSoporte } from "@/lib/soporte";
-import { CONTACTO_EMAIL } from "@/lib/sitio";
+import { CONTACTO_EMAIL, WHATSAPP_NUMERO, enlaceWhatsApp } from "@/lib/sitio";
 
 // Formulario de /soporte (empresas) y /reparaciones (personas). Usa el mismo
 // flujo que el formulario del home (solicitarDiagnosticoAction): la solicitud
@@ -83,7 +83,11 @@ export default function SolicitarServicio({
   const [respuestaEn, setRespuestaEn] = useState<number | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [pideCaptcha, setPideCaptcha] = useState(false);
+  const [captchaFallo, setCaptchaFallo] = useState(false);
+  // Cambia con "Reintentar" para montar el captcha desde cero.
+  const [intentoCaptcha, setIntentoCaptcha] = useState(0);
   const captcha = useRef<CaptchaHandle>(null);
+  const formulario = useRef<HTMLFormElement>(null);
   const select = useRef<HTMLSelectElement>(null);
 
   const servicio = SERVICIOS_SOPORTE.find((s) => s.id === servicioId) ?? null;
@@ -113,7 +117,38 @@ export default function SolicitarServicio({
     setServicioId("");
     setCaptchaToken(null);
     setPideCaptcha(false);
+    setCaptchaFallo(false);
     setVez((v) => v + 1);
+  }
+
+  function reintentarCaptcha() {
+    setCaptchaFallo(false);
+    setCaptchaToken(null);
+    setIntentoCaptcha((n) => n + 1);
+  }
+
+  // Si la verificación falla, lo escrito no se pierde: va armado en el mensaje.
+  function mensajeAlternativo() {
+    const fd = formulario.current ? new FormData(formulario.current) : null;
+    const campoForm = (n: string) => {
+      const v = fd?.get(n);
+      return typeof v === "string" ? v.trim() : "";
+    };
+    const datos = [
+      ["Servicio", servicio?.nombre ?? ""],
+      ["Nombre", campoForm("nombre")],
+      ["Empresa", campoForm("empresa")],
+      ["WhatsApp", campoForm("telefono")],
+      ["Correo", campoForm("email")],
+      ["Comuna", campoForm("comuna")],
+    ]
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}: ${v}`);
+    return [
+      "Hola ProyIT, quiero solicitar un servicio de soporte.",
+      ...(datos.length ? ["", ...datos] : []),
+      ...(campoForm("mensaje") ? ["", campoForm("mensaje")] : []),
+    ].join("\n");
   }
 
   return (
@@ -137,6 +172,7 @@ export default function SolicitarServicio({
         ) : (
           <form
             key={vez}
+            ref={formulario}
             action={enviar}
             onSubmit={(e) => {
               if (TURNSTILE_SITE_KEY && !captchaToken) {
@@ -270,13 +306,60 @@ export default function SolicitarServicio({
 
             <div>
               <Captcha
+                key={intentoCaptcha}
                 ref={captcha}
                 onToken={(t) => {
                   setCaptchaToken(t);
-                  if (t) setPideCaptcha(false);
+                  if (t) {
+                    setPideCaptcha(false);
+                    setCaptchaFallo(false);
+                  }
                 }}
+                onError={() => setCaptchaFallo(true)}
               />
-              {pideCaptcha && (
+              {captchaFallo && !captchaToken && (
+                <div role="alert" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <p className="font-semibold">No pudimos completar la verificación de seguridad.</p>
+                  <p className="mt-1">
+                    Suele pasar con VPN, bloqueadores de anuncios o redes con filtro. Puedes reintentar o escribirnos
+                    directo: lo que ya escribiste va incluido en el mensaje.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={reintentarCaptcha}
+                      className="rounded-full border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 transition hover:bg-amber-100"
+                    >
+                      Reintentar
+                    </button>
+                    {WHATSAPP_NUMERO && (
+                      <a
+                        href={enlaceWhatsApp("Hola ProyIT, quiero solicitar un servicio de soporte.")}
+                        onClick={(e) => {
+                          e.currentTarget.href = enlaceWhatsApp(mensajeAlternativo());
+                        }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-full bg-noche px-4 py-2 font-semibold text-white transition hover:bg-navy"
+                      >
+                        Escribir por WhatsApp
+                      </a>
+                    )}
+                    <a
+                      href={`mailto:${CONTACTO_EMAIL}`}
+                      onClick={(e) => {
+                        e.currentTarget.href = `mailto:${CONTACTO_EMAIL}?subject=${encodeURIComponent(
+                          "Solicitud de soporte",
+                        )}&body=${encodeURIComponent(mensajeAlternativo())}`;
+                      }}
+                      className="rounded-full border border-amber-300 bg-white px-4 py-2 font-semibold text-amber-900 transition hover:bg-amber-100"
+                    >
+                      Escribir a {CONTACTO_EMAIL}
+                    </a>
+                  </div>
+                </div>
+              )}
+              {pideCaptcha && !captchaFallo && (
                 <p role="alert" className="mt-2 text-sm text-red-700">
                   Completa la verificación de seguridad para enviar.
                 </p>

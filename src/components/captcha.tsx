@@ -37,6 +37,7 @@ type Props = {
 const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken, onError }, ref) {
   const contenedor = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const reintentos = useRef(0);
   // Guarda los callbacks más recientes sin volver a montar el widget.
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
@@ -47,6 +48,7 @@ const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken, onE
     // Cada token sirve una sola vez: se renueva después de cada intento.
     reset() {
       onTokenRef.current(null);
+      reintentos.current = 0;
       if (widgetId.current && window.turnstile) window.turnstile.reset(widgetId.current);
     },
   }));
@@ -67,7 +69,16 @@ const Captcha = forwardRef<CaptchaHandle, Props>(function Captcha({ onToken, onE
         "expired-callback": () => onTokenRef.current(null),
         "error-callback": () => {
           onTokenRef.current(null);
-          onErrorRef.current?.();
+          // Los fallos de Cloudflare suelen ser pasajeros (p. ej. 600010): se
+          // reintenta una vez sin molestar a la persona y, si vuelve a fallar,
+          // se avisa al formulario para que ofrezca otra salida.
+          if (reintentos.current < 1 && widgetId.current && window.turnstile) {
+            reintentos.current += 1;
+            window.turnstile.reset(widgetId.current);
+          } else {
+            onErrorRef.current?.();
+          }
+          return true; // error manejado: Turnstile no lo reporta como no atendido
         },
         "unsupported-callback": () => onErrorRef.current?.(),
       });
